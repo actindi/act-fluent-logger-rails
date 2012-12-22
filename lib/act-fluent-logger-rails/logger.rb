@@ -13,7 +13,7 @@ module ActFluentLoggerRails
         port: fluent_config['fluent_port']
       }
       @level = SEV_LABEL.index(Rails.application.config.log_level.to_s.upcase)
-      super(::Actindi::FluentLogger.new(settings, @level))
+      super(::ActFluentLoggerRails::FluentLogger.new(settings, @level))
     end
 
     def add(severity, message = nil, progname = nil, &block)
@@ -70,7 +70,7 @@ module ActFluentLoggerRails
     end
 
     def format_severity(severity)
-      Actindi::Logger::SEV_LABEL[severity] || 'ANY'
+      ActFluentLoggerRails::Logger::SEV_LABEL[severity] || 'ANY'
     end
   end
 end

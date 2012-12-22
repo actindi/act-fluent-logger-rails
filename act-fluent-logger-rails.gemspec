@@ -10,7 +10,7 @@ Gem::Specification.new do |gem|
   gem.email         = ["read.eval.print@gmail.com"]
   gem.description   = %q{Fluent logger}
   gem.summary       = %q{Fluent logger}
-  gem.homepage      = ""
+  gem.homepage      = "https://github.com/actindi/act-fluent-logger-rails"
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }

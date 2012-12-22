@@ -23,6 +23,24 @@ in config/environments/production.rb
     config.log_level = :info
     config.logger = Actindi::Logger.new
 
+create config/fluent-logger.yml
+
+    development:
+      fluent_host: '127.0.0.1'
+      fluent_port: 24224
+      tag:         'foo'
+    
+    test:
+      fluent_host: '127.0.0.1'
+      fluent_port: 24224
+      tag:         'foo'
+    
+    production:
+      fluent_host: '127.0.0.1'
+      fluent_port: 24224
+      tag:         'foo'
+
+
 ## Contributing
 
 1. Fork it
