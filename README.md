@@ -21,7 +21,7 @@ Or install it yourself as:
 in config/environments/production.rb
 
     config.log_level = :info
-    config.logger = Actindi::Logger.new
+    config.logger = ActFluentLoggerRails::Logger.new
 
 create config/fluent-logger.yml
 
