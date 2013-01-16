@@ -10,7 +10,8 @@ module ActFluentLoggerRails
       settings = {
         tag:  fluent_config['tag'],
         host: fluent_config['fluent_host'],
-        port: fluent_config['fluent_port']
+        port: fluent_config['fluent_port'],
+        messages_type: fluent_config['messages_type'],
       }
       @level = SEV_LABEL.index(Rails.application.config.log_level.to_s.upcase)
       super(::ActFluentLoggerRails::FluentLogger.new(settings, @level))
@@ -39,6 +40,7 @@ module ActFluentLoggerRails
       self.level = level
       port    = options[:port]
       host    = options[:host]
+      @messages_type = (options[:messages_type] || :array).to_sym
       @tag = options[:tag]
       @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, host: host, port: port)
       @severity = 0
@@ -52,7 +54,12 @@ module ActFluentLoggerRails
 
     def flush
       return if @messages.empty?
-      @fluent_logger.post(@tag, messages: @messages, level: format_severity(@severity))
+      messages = if @messages_type == :string
+                   @messages.join("\n")
+                 else
+                   @messages
+                 end
+      @fluent_logger.post(@tag, messages: messages, level: format_severity(@severity))
       @severity = 0
       @messages.clear
     end
