@@ -6,7 +6,7 @@ require 'act-fluent-logger-rails/version'
 Gem::Specification.new do |gem|
   gem.name          = "act-fluent-logger-rails"
   gem.version       = ActFluentLoggerRails::VERSION
-  gem.authors       = ["Yoshinori Tahara"]
+  gem.authors       = ["TAHARA Yoshinori"]
   gem.email         = ["read.eval.print@gmail.com"]
   gem.description   = %q{Fluent logger}
   gem.summary       = %q{Fluent logger}
