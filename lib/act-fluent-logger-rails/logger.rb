@@ -21,7 +21,7 @@ module ActFluentLoggerRails
       return true if severity < @level
       message = (block_given? ? block.call : progname) if message.blank?
       return true if message.blank?
-      @logger.add_message(severity, message)
+      @logger.add_message(severity, "#{tags_text}#{message}")
       true
     end
 
