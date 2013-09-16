@@ -3,8 +3,9 @@ require 'fluent-logger'
 
 module ActFluentLoggerRails
 
-  class Logger < ::ActiveSupport::TaggedLogging
-    def initialize
+  module Logger
+
+    def self.new
       config_file   = Rails.root.join("config", "fluent-logger.yml")
       fluent_config = YAML.load(ERB.new(config_file.read).result)[Rails.env]
       settings = {
@@ -13,15 +14,16 @@ module ActFluentLoggerRails
         port: fluent_config['fluent_port'],
         messages_type: fluent_config['messages_type'],
       }
-      @level = SEV_LABEL.index(Rails.application.config.log_level.to_s.upcase)
-      super(::ActFluentLoggerRails::FluentLogger.new(settings, @level))
+      level = SEV_LABEL.index(Rails.application.config.log_level.to_s.upcase)
+      logger = ::ActFluentLoggerRails::FluentLogger.new(settings, level)
+      logger.extend ::ActiveSupport::TaggedLogging
     end
 
     def add(severity, message = nil, progname = nil, &block)
-      return true if severity < @level
+      return true if severity < level
       message = (block_given? ? block.call : progname) if message.blank?
       return true if message.blank?
-      @logger.add_message(severity, message)
+      add_message(severity, message)
       true
     end
 
@@ -35,7 +37,7 @@ module ActFluentLoggerRails
     SEV_LABEL = %w(DEBUG INFO WARN ERROR FATAL ANY)
   end
 
-  class FluentLogger < ActiveSupport::BufferedLogger
+  class FluentLogger < ActiveSupport::Logger
     def initialize(options, level=DEBUG)
       self.level = level
       port    = options[:port]
