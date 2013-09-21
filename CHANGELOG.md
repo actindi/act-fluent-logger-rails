@@ -1,3 +1,7 @@
+## 0.1.1 / September 26 2013
+
+ * Add log_tags feature.
+
 ## 0.1.0 / September 16 2013
 
  * Rails 4.0.0

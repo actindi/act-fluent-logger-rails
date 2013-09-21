@@ -2,6 +2,10 @@
 
 Fluent logger.
 
+## Supported versions
+
+ * Rails 4.0
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -22,6 +26,14 @@ in config/environments/production.rb
 
     config.log_level = :info
     config.logger = ActFluentLoggerRails::Logger.new
+    config.logger = ActFluentLoggerRails::Logger.
+      new(log_tags: {
+            ip: :ip,
+            ua: :user_agent,
+            uid: ->(request) { request.session[:uid] }
+          })
+
+Don't use config.log_tags.
 
 create config/fluent-logger.yml
 
@@ -56,9 +68,9 @@ create config/fluent-logger.yml
 2013-01-18T15:04:50+09:00 foo {"messages":["Started GET \"/\" for 127.0.0.1 at 2013-01-18 15:04:49 +0900","Processing by TopController#index as HTML","Completed 200 OK in 635ms (Views: 479.3ms | ActiveRecord: 39.6ms)"],"level":"INFO"}
 ```
 
-If your Rails version is older than v3.2.9, You must set a dummy value to config.log_tags.
+You can add any tags at run time.
 
-    config.log_tags = ['nothing']
+   logger[:foo] = "foo value"
 
 
 ## Contributing
