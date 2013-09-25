@@ -25,7 +25,6 @@ Or install it yourself as:
 in config/environments/production.rb
 
     config.log_level = :info
-    config.logger = ActFluentLoggerRails::Logger.new
     config.logger = ActFluentLoggerRails::Logger.
       new(log_tags: {
             ip: :ip,
