@@ -1,3 +1,7 @@
+## 0.1.2 / September 30 2013
+
+ * Add 'gem.license = "MIT"' to gemspec.
+
 ## 0.1.1 / September 26 2013
 
  * Add log_tags feature.
