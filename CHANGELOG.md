@@ -1,3 +1,7 @@
+## 0.1.3 / April 11 2013
+
+ * Rails 4.1.0
+
 ## 0.1.2 / September 30 2013
 
  * Add 'gem.license = "MIT"' to gemspec.
