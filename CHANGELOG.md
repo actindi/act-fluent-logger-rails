@@ -1,4 +1,8 @@
-## 0.1.3 / April 11 2013
+## 0.1.4 / July 18 2014
+
+ * Enable to use EVN['FLUENTD_URL']
+
+## 0.1.3 / April 11 2014
 
  * Rails 4.1.0
 

@@ -54,6 +54,10 @@ create config/fluent-logger.yml
       tag:           'foo'
       messages_type: 'string'
 
+or set an environment variable FLUENTD_URL
+
+    http://fluentd.example.com:42442/foo?messages_type=string
+
  * fluent_host: The host name of Fluentd.
  * fluent_port: The port number of Fluentd.
  * tag: The tag of the Fluentd event.
