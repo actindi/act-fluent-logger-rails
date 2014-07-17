@@ -64,4 +64,16 @@ EOF
                                      foo: 'foo_value'
                                    } ]])
   end
+
+  describe "use ENV['FLUENTD_URL']" do
+    let(:fluentd_url) { "http://fluentd.example.com:42442/hoge?messages_type=string" }
+
+    describe ".parse_url" do
+      subject { described_class.parse_url(fluentd_url) }
+      it { expect(subject['tag']).to eq 'hoge' }
+      it { expect(subject['host']).to eq 'fluentd.example.com' }
+      it { expect(subject['port']).to eq 42442 }
+      it { expect(subject['messages_type']).to eq 'string' }
+    end
+  end
 end
