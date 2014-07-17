@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 require 'fluent-logger'
+require 'active_support/core_ext'
+require 'uri'
+require 'cgi'
 
 module ActFluentLoggerRails
 
@@ -10,7 +13,11 @@ module ActFluentLoggerRails
 
     def self.new(config_file: Rails.root.join("config", "fluent-logger.yml"), log_tags: {})
       Rails.application.config.log_tags = [ ->(request) { request } ] unless log_tags.empty?
-      fluent_config = YAML.load(ERB.new(config_file.read).result)[Rails.env]
+      fluent_config = if ENV["FLUENTD_URL"]
+                        self.parse_url(ENV["FLUENTD_URL"])
+                      else
+                        YAML.load(ERB.new(config_file.read).result)[Rails.env]
+                      end
       settings = {
         tag:  fluent_config['tag'],
         host: fluent_config['fluent_host'],
@@ -21,6 +28,18 @@ module ActFluentLoggerRails
       logger = ActFluentLoggerRails::FluentLogger.new(settings, level, log_tags)
       logger = ActiveSupport::TaggedLogging.new(logger)
       logger.extend self
+    end
+
+    def self.parse_url(fluentd_url)
+      uri = URI.parse fluentd_url
+      params = CGI.parse uri.query
+
+      {
+        host: uri.host,
+        port: uri.port,
+        tag: uri.path[1..-1],
+        messages_type: params["messages_type"].try(:first)
+      }.stringify_keys
     end
 
     def tagged(*tags)
