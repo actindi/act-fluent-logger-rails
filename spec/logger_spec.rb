@@ -5,9 +5,11 @@ require 'tempfile'
 describe ActFluentLoggerRails::Logger do
   before do
 
-    Rails = double("Rails", env: "test")
-    Rails.stub_chain(:application, :config, :log_level).and_return(:debug)
-    Rails.stub_chain(:application, :config, :log_tags=)
+    unless self.class.const_defined?(:Rails)
+      Rails = double("Rails", env: "test")
+      Rails.stub_chain(:application, :config, :log_level).and_return(:debug)
+      Rails.stub_chain(:application, :config, :log_tags=)
+    end
 
     class MyLogger
       attr_accessor :log
