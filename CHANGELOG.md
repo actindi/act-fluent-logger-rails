@@ -1,3 +1,7 @@
+## 0.1.5 / July 19 2014
+
+ * Fix keynames of EVN['FLUENTD_URL']
+
 ## 0.1.4 / July 18 2014
 
  * Enable to use EVN['FLUENTD_URL']
