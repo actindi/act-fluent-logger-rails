@@ -35,8 +35,8 @@ module ActFluentLoggerRails
       params = CGI.parse uri.query
 
       {
-        host: uri.host,
-        port: uri.port,
+        fluent_host: uri.host,
+        fluent_port: uri.port,
         tag: uri.path[1..-1],
         messages_type: params["messages_type"].try(:first)
       }.stringify_keys

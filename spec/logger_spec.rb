@@ -71,8 +71,8 @@ EOF
     describe ".parse_url" do
       subject { described_class.parse_url(fluentd_url) }
       it { expect(subject['tag']).to eq 'hoge' }
-      it { expect(subject['host']).to eq 'fluentd.example.com' }
-      it { expect(subject['port']).to eq 42442 }
+      it { expect(subject['fluent_host']).to eq 'fluentd.example.com' }
+      it { expect(subject['fluent_port']).to eq 42442 }
       it { expect(subject['messages_type']).to eq 'string' }
     end
   end
