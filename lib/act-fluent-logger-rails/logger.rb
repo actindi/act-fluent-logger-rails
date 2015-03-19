@@ -74,12 +74,12 @@ module ActFluentLoggerRails
 
     def add_message(severity, message)
       @severity = severity if @severity < severity
-      @messages << encode_message(message)
-    end
 
-    def encode_message(message)
-      return nil unless message.respond_to? :force_encoding
-      message.force_encoding("UTF-8")
+      if message.encoding == Encoding::UTF_8
+        @messages << message
+      else
+        @messages << message.dup.force_encoding(Encoding::UTF_8)
+      end
     end
 
     def [](key)
