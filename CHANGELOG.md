@@ -1,3 +1,7 @@
+## 0.1.6 / March 20 2015
+
+ * Fix incompatible character encodings #13.
+
 ## 0.1.5 / July 19 2014
 
  * Fix keynames of EVN['FLUENTD_URL']

@@ -4,12 +4,10 @@ require 'tempfile'
 
 describe ActFluentLoggerRails::Logger do
   before do
-
-    unless self.class.const_defined?(:Rails)
-      Rails = double("Rails", env: "test")
-      Rails.stub_chain(:application, :config, :log_level).and_return(:debug)
-      Rails.stub_chain(:application, :config, :log_tags=)
-    end
+    Rails = double("Rails") unless self.class.const_defined?(:Rails)
+    Rails.stub(env: "test")
+    Rails.stub_chain(:application, :config, :log_level).and_return(:debug)
+    Rails.stub_chain(:application, :config, :log_tags=)
 
     class MyLogger
       attr_accessor :log
@@ -46,25 +44,47 @@ EOF
                                      })
   }
 
-  it 'info' do
-    request = double('request', uuid: 'uuid_value', foo: 'foo_value')
-    logger[:abc] = 'xyz'
-    logger.tagged([request]) { logger.info('hello') }
-    expect(@my_logger.log).to eq([['foo', {
-                                     abc: 'xyz',
-                                     messages: ['hello'],
-                                     level: 'INFO',
-                                     uuid: 'uuid_value',
-                                     foo: 'foo_value'
-                                   } ]])
-    @my_logger.clear
-    logger.tagged([request]) { logger.info('world'); logger.info('bye') }
-    expect(@my_logger.log).to eq([['foo', {
-                                     messages: ['world', 'bye'],
-                                     level: 'INFO',
-                                     uuid: 'uuid_value',
-                                     foo: 'foo_value'
-                                   } ]])
+  let(:request) {
+    double('request', uuid: 'uuid_value', foo: 'foo_value')
+  }
+
+  describe 'logging' do
+
+    describe 'basic' do
+      it 'info' do
+        logger[:abc] = 'xyz'
+        logger.tagged([request]) { logger.info('hello') }
+        expect(@my_logger.log).to eq([['foo', {
+                                         abc: 'xyz',
+                                         messages: ['hello'],
+                                         level: 'INFO',
+                                         uuid: 'uuid_value',
+                                         foo: 'foo_value'
+                                       } ]])
+        @my_logger.clear
+        logger.tagged([request]) { logger.info('world'); logger.info('bye') }
+        expect(@my_logger.log).to eq([['foo', {
+                                         messages: ['world', 'bye'],
+                                         level: 'INFO',
+                                         uuid: 'uuid_value',
+                                         foo: 'foo_value'
+                                       } ]])
+      end
+    end
+
+    describe 'frozen ascii-8bit string' do
+      it 'join messages' do
+        logger.instance_variable_set(:@messages_type, :string)
+        ascii = "\xe8\x8a\xb1".force_encoding('ascii-8bit').freeze
+        logger.tagged([request]) {
+          logger.info(ascii)
+          logger.info('咲く')
+        }
+        expect(@my_logger.log[0][1][:messages]).to eq("花\n咲く")
+        expect(ascii.encoding).to eq(Encoding::ASCII_8BIT)
+      end
+    end
+
   end
 
   describe "use ENV['FLUENTD_URL']" do
