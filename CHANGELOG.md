@@ -1,3 +1,7 @@
+## 0.1.7 / July 30 2015
+
+* Be able to log exceptions #15.
+
 ## 0.1.6 / March 20 2015
 
  * Fix incompatible character encodings #13.
