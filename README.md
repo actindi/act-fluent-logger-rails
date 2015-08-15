@@ -61,7 +61,7 @@ or set an environment variable FLUENTD_URL
  * fluent_host: The host name of Fluentd.
  * fluent_port: The port number of Fluentd.
  * tag: The tag of the Fluentd event.
- * messages_type: The type of log messags. 'string' or 'array'.
+ * messages_type: The type of log messages. 'string' or 'array'.
    If it is 'string', the log messages is a String.
 ```
 2013-01-18T15:04:50+09:00 foo {"messages":"Started GET \"/\" for 127.0.0.1 at 2013-01-18 15:04:49 +0900\nProcessing by TopController#index as HTML\nCompleted 200 OK in 635ms (Views: 479.3ms | ActiveRecord: 39.6ms)"],"level":"INFO"}
