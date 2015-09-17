@@ -11,7 +11,7 @@ module ActFluentLoggerRails
     # Severity label for logging. (max 5 char)
     SEV_LABEL = %w(DEBUG INFO WARN ERROR FATAL ANY)
 
-    def self.new(config_file: Rails.root.join("config", "fluent-logger.yml"), log_tags: {})
+    def self.new(config_file: Rails.root.join("config", "fluent-logger.yml"), log_tags: {}, secondary_log: nil)
       Rails.application.config.log_tags = [ ->(request) { request } ] unless log_tags.empty?
       fluent_config = if ENV["FLUENTD_URL"]
                         self.parse_url(ENV["FLUENTD_URL"])
@@ -23,6 +23,7 @@ module ActFluentLoggerRails
         host: fluent_config['fluent_host'],
         port: fluent_config['fluent_port'],
         messages_type: fluent_config['messages_type'],
+        secondary_log: secondary_log,
       }
       level = SEV_LABEL.index(Rails.application.config.log_level.to_s.upcase)
       logger = ActFluentLoggerRails::FluentLogger.new(settings, level, log_tags)
@@ -55,6 +56,7 @@ module ActFluentLoggerRails
       self.level = level
       port    = options[:port]
       host    = options[:host]
+      @secondary_log = options[:secondary_log]
       @messages_type = (options[:messages_type] || :array).to_sym
       @tag = options[:tag]
       @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, host: host, port: port)
@@ -114,7 +116,14 @@ module ActFluentLoggerRails
                     v
                   end rescue :error
       end
+
       @fluent_logger.post(@tag, @map)
+
+      if @secondary_log
+        @secondary_log.add(@severity, @map)
+        @secondary_log.flush
+      end
+
       @severity = 0
       @messages.clear
       @map.clear
