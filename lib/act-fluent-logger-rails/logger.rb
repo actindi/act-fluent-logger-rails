@@ -118,11 +118,7 @@ module ActFluentLoggerRails
       end
 
       @fluent_logger.post(@tag, @map)
-
-      if @secondary_log
-        @secondary_log.add(@severity, @map)
-        @secondary_log.flush
-      end
+      @secondary_log.add(@severity, @map) if @secondary_log
 
       @severity = 0
       @messages.clear
