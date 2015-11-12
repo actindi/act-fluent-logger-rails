@@ -80,6 +80,10 @@ module ActFluentLoggerRails
         message = error_message
       end
 
+      if not message.methods.include? :encoding
+        message = message.inspect
+      end
+
       if message.encoding == Encoding::UTF_8
         @messages << message
       else
