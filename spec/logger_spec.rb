@@ -73,8 +73,15 @@ EOF
     end
 
     describe 'frozen ascii-8bit string' do
-      it 'join messages' do
+      before do
         logger.instance_variable_set(:@messages_type, :string)
+      end
+
+      after do
+        logger.instance_variable_set(:@messages_type, :array)
+      end
+
+      it 'join messages' do
         ascii = "\xe8\x8a\xb1".force_encoding('ascii-8bit').freeze
         logger.tagged([request]) {
           logger.info(ascii)
@@ -85,6 +92,29 @@ EOF
       end
     end
 
+    describe 'Exception' do
+      it 'output message, class, backtrace' do
+        begin
+          3 / 0
+        rescue => e
+          logger.tagged([request]) {
+            logger.error(e)
+          }
+          expect(@my_logger.log[0][1][:messages][0]).
+            to match(%r|divided by 0 \(ZeroDivisionError\).*spec/logger_spec\.rb:|m)
+        end
+      end
+    end
+
+    describe 'Object' do
+      it 'output inspect' do
+        x = Object.new
+        logger.tagged([request]) {
+          logger.info(x)
+        }
+        expect(@my_logger.log[0][1][:messages][0]).to eq(x.inspect)
+      end
+    end
   end
 
   describe "use ENV['FLUENTD_URL']" do

@@ -1,3 +1,7 @@
+## 0.1.8 / Nov 14 2015
+
+* Output Object#inspect if message is not String and not Exception.
+
 ## 0.1.7 / July 30 2015
 
 * Be able to log exceptions #15.
