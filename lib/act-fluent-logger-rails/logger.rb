@@ -11,7 +11,7 @@ module ActFluentLoggerRails
     # Severity label for logging. (max 5 char)
     SEV_LABEL = %w(DEBUG INFO WARN ERROR FATAL ANY)
 
-    def self.new(config_file: Rails.root.join("config", "fluent-logger.yml"), log_tags: {})
+    def self.new(config_file: Rails.root.join("config", "fluent-logger.yml"), log_tags: {}, secondary_log: nil, flush_immediately: false)
       Rails.application.config.log_tags = [ ->(request) { request } ] unless log_tags.empty?
       fluent_config = if ENV["FLUENTD_URL"]
                         self.parse_url(ENV["FLUENTD_URL"])
@@ -23,6 +23,8 @@ module ActFluentLoggerRails
         host: fluent_config['fluent_host'],
         port: fluent_config['fluent_port'],
         messages_type: fluent_config['messages_type'],
+        secondary_log: secondary_log,
+        flush_immediately: flush_immediately
       }
       level = SEV_LABEL.index(Rails.application.config.log_level.to_s.upcase)
       logger = ActFluentLoggerRails::FluentLogger.new(settings, level, log_tags)
@@ -55,6 +57,8 @@ module ActFluentLoggerRails
       self.level = level
       port    = options[:port]
       host    = options[:host]
+      @secondary_log = options[:secondary_log]
+      @flush_immediately = options[:flush_immediately]
       @messages_type = (options[:messages_type] || :array).to_sym
       @tag = options[:tag]
       @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, host: host, port: port)
@@ -91,6 +95,8 @@ module ActFluentLoggerRails
       else
         @messages << message.dup.force_encoding(Encoding::UTF_8)
       end
+
+      flush if @flush_immediately
     end
 
     def [](key)
@@ -120,7 +126,10 @@ module ActFluentLoggerRails
                     v
                   end rescue :error
       end
+
       @fluent_logger.post(@tag, @map)
+      @secondary_log.add(@severity, @map) if @secondary_log
+
       @severity = 0
       @messages.clear
       @map.clear
