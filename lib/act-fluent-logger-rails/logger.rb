@@ -108,6 +108,7 @@ module ActFluentLoggerRails
                  end
       @map[:messages] = messages
       @map[:level] = format_severity(@severity)
+      @map[:severity] = format_severity(@severity)
       @log_tags.each do |k, v|
         @map[k] = case v
                   when Proc
