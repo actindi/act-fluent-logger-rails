@@ -57,7 +57,7 @@ EOF
         expect(@my_logger.log).to eq([['foo', {
                                          abc: 'xyz',
                                          messages: ['hello'],
-                                         level: 'INFO',
+                                         severity: 'INFO',
                                          uuid: 'uuid_value',
                                          foo: 'foo_value'
                                        } ]])
@@ -65,7 +65,7 @@ EOF
         logger.tagged([request]) { logger.info('world'); logger.info('bye') }
         expect(@my_logger.log).to eq([['foo', {
                                          messages: ['world', 'bye'],
-                                         level: 'INFO',
+                                         severity: 'INFO',
                                          uuid: 'uuid_value',
                                          foo: 'foo_value'
                                        } ]])
@@ -115,10 +115,40 @@ EOF
         expect(@my_logger.log[0][1][:messages][0]).to eq(x.inspect)
       end
     end
+
+    describe 'severity_key' do
+      describe 'not specified' do
+        it 'severity' do
+          logger.tagged([request]) { logger.info('hello') }
+          expect(@my_logger.log[0][1][:severity]).to eq('INFO')
+        end
+      end
+
+      describe 'severity_key: level' do
+        before do
+          @config_file = Tempfile.new('fluent-logger-config')
+          @config_file.close(false)
+          File.open(@config_file.path, 'w') {|f|
+            f.puts <<EOF
+test:
+  fluent_host: '127.0.0.1'
+  fluent_port: 24224
+  tag:         'foo'
+  severity_key: 'level'  # default severity
+EOF
+          }
+        end
+
+        it 'level' do
+          logger.tagged([request]) { logger.info('hello') }
+          expect(@my_logger.log[0][1][:level]).to eq('INFO')
+        end
+      end
+    end
   end
 
   describe "use ENV['FLUENTD_URL']" do
-    let(:fluentd_url) { "http://fluentd.example.com:42442/hoge?messages_type=string" }
+    let(:fluentd_url) { "http://fluentd.example.com:42442/hoge?messages_type=string&severity_key=level" }
 
     describe ".parse_url" do
       subject { described_class.parse_url(fluentd_url) }
@@ -126,6 +156,7 @@ EOF
       it { expect(subject['fluent_host']).to eq 'fluentd.example.com' }
       it { expect(subject['fluent_port']).to eq 42442 }
       it { expect(subject['messages_type']).to eq 'string' }
+      it { expect(subject['severity_key']).to eq 'level' }
     end
   end
 end

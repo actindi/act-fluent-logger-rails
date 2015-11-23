@@ -11,10 +11,10 @@ module ActFluentLoggerRails
     # Severity label for logging. (max 5 char)
     SEV_LABEL = %w(DEBUG INFO WARN ERROR FATAL ANY)
 
-    def self.new(config_file: Rails.root.join("config", "fluent-logger.yml"), log_tags: {})
+    def self.new(config_file: Rails.root.join('config', 'fluent-logger.yml'), log_tags: {})
       Rails.application.config.log_tags = [ ->(request) { request } ] unless log_tags.empty?
-      fluent_config = if ENV["FLUENTD_URL"]
-                        self.parse_url(ENV["FLUENTD_URL"])
+      fluent_config = if ENV['FLUENTD_URL']
+                        self.parse_url(ENV['FLUENTD_URL'])
                       else
                         YAML.load(ERB.new(config_file.read).result)[Rails.env]
                       end
@@ -23,6 +23,7 @@ module ActFluentLoggerRails
         host: fluent_config['fluent_host'],
         port: fluent_config['fluent_port'],
         messages_type: fluent_config['messages_type'],
+        severity_key: fluent_config['severity_key'],
       }
       level = SEV_LABEL.index(Rails.application.config.log_level.to_s.upcase)
       logger = ActFluentLoggerRails::FluentLogger.new(settings, level, log_tags)
@@ -38,7 +39,8 @@ module ActFluentLoggerRails
         fluent_host: uri.host,
         fluent_port: uri.port,
         tag: uri.path[1..-1],
-        messages_type: params["messages_type"].try(:first)
+        messages_type: params['messages_type'].try(:first),
+        severity_key: params['severity_key'].try(:first),
       }.stringify_keys
     end
 
@@ -57,6 +59,7 @@ module ActFluentLoggerRails
       host    = options[:host]
       @messages_type = (options[:messages_type] || :array).to_sym
       @tag = options[:tag]
+      @severity_key = (options[:severity_key] || :severity).to_sym
       @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, host: host, port: port)
       @severity = 0
       @messages = []
@@ -109,7 +112,7 @@ module ActFluentLoggerRails
                    @messages
                  end
       @map[:messages] = messages
-      @map[:level] = format_severity(@severity)
+      @map[@severity_key] = format_severity(@severity)
       @log_tags.each do |k, v|
         @map[k] = case v
                   when Proc
