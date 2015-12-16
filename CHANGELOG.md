@@ -1,10 +1,14 @@
+## 0.1.9 / Dec 16 2015
+
+ * Added settings: parameter to ActFluentLoggerRails::Logger.new.
+
 ## 0.1.8 / Nov 14 2015
 
-* Output Object#inspect if message is not String and not Exception.
+ * Output Object#inspect if message is not String and not Exception.
 
 ## 0.1.7 / July 30 2015
 
-* Be able to log exceptions #15.
+ * Be able to log exceptions #15.
 
 ## 0.1.6 / March 20 2015
 
