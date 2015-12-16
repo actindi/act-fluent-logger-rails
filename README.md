@@ -34,9 +34,9 @@ in config/environments/production.rb
 
 Don't use config.log_tags.
 
-## To define where to send messages to, eiter:
+### To define where to send messages to, eiter:
 
-# create config/fluent-logger.yml
+#### create config/fluent-logger.yml
 
     development:
       fluent_host:   '127.0.0.1'
@@ -56,7 +56,7 @@ Don't use config.log_tags.
       tag:           'foo'
       messages_type: 'string'
 
-# set an environment variable FLUENTD_URL
+#### set an environment variable FLUENTD_URL
 
     http://fluentd.example.com:42442/foo?messages_type=string
 
@@ -65,7 +65,7 @@ Don't use config.log_tags.
  * tag: The tag of the Fluentd event.
  * messages_type: The type of log messages. 'string' or 'array'.
 
-# pass a settings object to ActFluentLoggerRails::Logger.new
+#### pass a settings object to ActFluentLoggerRails::Logger.new
 
     config.logger = ActFluentLoggerRails::Logger.
       new(settings: {
