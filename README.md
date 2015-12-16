@@ -34,7 +34,7 @@ in config/environments/production.rb
 
 Don't use config.log_tags.
 
-### To define where to send messages to, eiter:
+### To define where to send messages to, either:
 
 #### create config/fluent-logger.yml
 
@@ -70,7 +70,7 @@ Don't use config.log_tags.
     config.logger = ActFluentLoggerRails::Logger.
       new(settings: {
             host: '127.0.0.1',
-            port: 24224,
+	    port: 24224,
 	    tag: 'foo',
 	    messages_type: 'string'})
 
