@@ -1,3 +1,7 @@
+## 0.1.10 / Dec 23 2015
+
+* flush immediately.
+
 ## 0.1.9 / Dec 16 2015
 
  * Added settings: parameter to ActFluentLoggerRails::Logger.new.
