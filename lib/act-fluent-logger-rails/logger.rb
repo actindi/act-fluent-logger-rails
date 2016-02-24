@@ -13,24 +13,23 @@ module ActFluentLoggerRails
 
     def self.new(config_file: Rails.root.join("config", "fluent-logger.yml"),
                  log_tags: {},
-                 settings: {},
+                 secondary_log: nil,
                  flush_immediately: false)
       Rails.application.config.log_tags = [ ->(request) { request } ] unless log_tags.empty?
-      if (0 == settings.length)
-        fluent_config = if ENV["FLUENTD_URL"]
-                          self.parse_url(ENV["FLUENTD_URL"])
-                        else
-                          YAML.load(ERB.new(config_file.read).result)[Rails.env]
-                        end
-        settings = {
-          tag:  fluent_config['tag'],
-          host: fluent_config['fluent_host'],
-          port: fluent_config['fluent_port'],
-          messages_type: fluent_config['messages_type'],
-        }
-      end
 
-      settings[:flush_immediately] ||= flush_immediately
+      fluent_config = if ENV["FLUENTD_URL"]
+                        self.parse_url(ENV["FLUENTD_URL"])
+                      else
+                        YAML.load(ERB.new(config_file.read).result)[Rails.env]
+                      end
+      settings = {
+        tag:  fluent_config['tag'],
+        host: fluent_config['fluent_host'],
+        port: fluent_config['fluent_port'],
+        messages_type: fluent_config['messages_type'],
+        secondary_log: secondary_log,
+        flush_immediately: flush_immediately
+      }
 
       level = SEV_LABEL.index(Rails.application.config.log_level.to_s.upcase)
       logger = ActFluentLoggerRails::FluentLogger.new(settings, level, log_tags)
@@ -63,6 +62,8 @@ module ActFluentLoggerRails
       self.level = level
       port    = options[:port]
       host    = options[:host]
+      @secondary_log = options[:secondary_log]
+      @flush_immediately = options[:flush_immediately]
       @messages_type = (options[:messages_type] || :array).to_sym
       @tag = options[:tag]
       @flush_immediately = options[:flush_immediately]
@@ -131,7 +132,10 @@ module ActFluentLoggerRails
                     v
                   end rescue :error
       end
+
       @fluent_logger.post(@tag, @map)
+      @secondary_log.add(@severity, @map) if @secondary_log
+
       @severity = 0
       @messages.clear
       @map.clear
