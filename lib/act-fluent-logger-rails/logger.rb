@@ -11,8 +11,12 @@ module ActFluentLoggerRails
     # Severity label for logging. (max 5 char)
     SEV_LABEL = %w(DEBUG INFO WARN ERROR FATAL ANY)
 
-    def self.new(config_file: Rails.root.join("config", "fluent-logger.yml"), log_tags: {}, secondary_log: nil, flush_immediately: false)
+    def self.new(config_file: Rails.root.join("config", "fluent-logger.yml"),
+                 log_tags: {},
+                 secondary_log: nil,
+                 flush_immediately: false)
       Rails.application.config.log_tags = [ ->(request) { request } ] unless log_tags.empty?
+
       fluent_config = if ENV["FLUENTD_URL"]
                         self.parse_url(ENV["FLUENTD_URL"])
                       else
@@ -26,6 +30,7 @@ module ActFluentLoggerRails
         secondary_log: secondary_log,
         flush_immediately: flush_immediately
       }
+
       level = SEV_LABEL.index(Rails.application.config.log_level.to_s.upcase)
       logger = ActFluentLoggerRails::FluentLogger.new(settings, level, log_tags)
       logger = ActiveSupport::TaggedLogging.new(logger)
@@ -61,6 +66,7 @@ module ActFluentLoggerRails
       @flush_immediately = options[:flush_immediately]
       @messages_type = (options[:messages_type] || :array).to_sym
       @tag = options[:tag]
+      @flush_immediately = options[:flush_immediately]
       @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, host: host, port: port)
       @severity = 0
       @messages = []
@@ -79,10 +85,16 @@ module ActFluentLoggerRails
     def add_message(severity, message)
       @severity = severity if @severity < severity
 
-      if message.is_a? Exception
-        error_message = message.message + "\n" + message.backtrace.join("\n") + "\n"
-        message = error_message
-      end
+      message =
+        case message
+        when ::String
+          message
+        when ::Exception
+          "#{ message.message } (#{ message.class })\n" <<
+            (message.backtrace || []).join("\n")
+        else
+          message.inspect
+        end
 
       if message.encoding == Encoding::UTF_8
         @messages << message
