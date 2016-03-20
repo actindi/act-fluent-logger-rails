@@ -27,6 +27,7 @@ module ActFluentLoggerRails
           host: fluent_config['fluent_host'],
           port: fluent_config['fluent_port'],
           messages_type: fluent_config['messages_type'],
+          severity_key: fluent_config['severity_key'],
         }
       end
 
@@ -46,7 +47,8 @@ module ActFluentLoggerRails
         fluent_host: uri.host,
         fluent_port: uri.port,
         tag: uri.path[1..-1],
-        messages_type: params["messages_type"].try(:first)
+        messages_type: params['messages_type'].try(:first),
+        severity_key: params['severity_key'].try(:first),
       }.stringify_keys
     end
 
@@ -65,6 +67,7 @@ module ActFluentLoggerRails
       host    = options[:host]
       @messages_type = (options[:messages_type] || :array).to_sym
       @tag = options[:tag]
+      @severity_key = (options[:severity_key] || :severity).to_sym
       @flush_immediately = options[:flush_immediately]
       @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, host: host, port: port)
       @severity = 0
@@ -120,7 +123,7 @@ module ActFluentLoggerRails
                    @messages
                  end
       @map[:messages] = messages
-      @map[:level] = format_severity(@severity)
+      @map[@severity_key] = format_severity(@severity)
       @log_tags.each do |k, v|
         @map[k] = case v
                   when Proc
