@@ -1,3 +1,7 @@
+## 0.2.0 / Mar 20 2016
+
+* Add severity_key parameter. Is is The key of severity(DEBUG, INFO, WARN, ERROR).
+
 ## 0.1.10 / Dec 23 2015
 
 * flush immediately.
