@@ -11,20 +11,28 @@ module ActFluentLoggerRails
     # Severity label for logging. (max 5 char)
     SEV_LABEL = %w(DEBUG INFO WARN ERROR FATAL ANY)
 
-    def self.new(config_file: Rails.root.join('config', 'fluent-logger.yml'), log_tags: {})
+    def self.new(config_file: Rails.root.join("config", "fluent-logger.yml"),
+                 log_tags: {},
+                 settings: {},
+                 flush_immediately: false)
       Rails.application.config.log_tags = [ ->(request) { request } ] unless log_tags.empty?
-      fluent_config = if ENV['FLUENTD_URL']
-                        self.parse_url(ENV['FLUENTD_URL'])
-                      else
-                        YAML.load(ERB.new(config_file.read).result)[Rails.env]
-                      end
-      settings = {
-        tag:  fluent_config['tag'],
-        host: fluent_config['fluent_host'],
-        port: fluent_config['fluent_port'],
-        messages_type: fluent_config['messages_type'],
-        severity_key: fluent_config['severity_key'],
-      }
+      if (0 == settings.length)
+        fluent_config = if ENV["FLUENTD_URL"]
+                          self.parse_url(ENV["FLUENTD_URL"])
+                        else
+                          YAML.load(ERB.new(config_file.read).result)[Rails.env]
+                        end
+        settings = {
+          tag:  fluent_config['tag'],
+          host: fluent_config['fluent_host'],
+          port: fluent_config['fluent_port'],
+          messages_type: fluent_config['messages_type'],
+          severity_key: fluent_config['severity_key'],
+        }
+      end
+
+      settings[:flush_immediately] ||= flush_immediately
+
       level = SEV_LABEL.index(Rails.application.config.log_level.to_s.upcase)
       logger = ActFluentLoggerRails::FluentLogger.new(settings, level, log_tags)
       logger = ActiveSupport::TaggedLogging.new(logger)
@@ -60,6 +68,7 @@ module ActFluentLoggerRails
       @messages_type = (options[:messages_type] || :array).to_sym
       @tag = options[:tag]
       @severity_key = (options[:severity_key] || :severity).to_sym
+      @flush_immediately = options[:flush_immediately]
       @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, host: host, port: port)
       @severity = 0
       @messages = []
@@ -94,6 +103,8 @@ module ActFluentLoggerRails
       else
         @messages << message.dup.force_encoding(Encoding::UTF_8)
       end
+
+      flush if @flush_immediately
     end
 
     def [](key)

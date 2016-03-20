@@ -159,4 +159,24 @@ EOF
       it { expect(subject['severity_key']).to eq 'level' }
     end
   end
+
+  describe 'flush_immediately' do
+    describe 'flush_immediately: true' do
+      it 'flushed' do
+        logger = ActFluentLoggerRails::Logger.new(config_file: File.new(@config_file.path),
+                                                  flush_immediately: true)
+        logger.info('Immediately!')
+        expect(@my_logger.log[0][1][:messages][0]).to eq('Immediately!')
+      end
+    end
+
+    describe 'flush_immediately: false' do
+      it 'flushed' do
+        logger = ActFluentLoggerRails::Logger.new(config_file: File.new(@config_file.path),
+                                                  flush_immediately: false)
+        logger.info('Immediately!')
+        expect(@my_logger.log).to eq(nil)
+      end
+    end
+  end
 end
