@@ -3,7 +3,7 @@ PATH
   specs:
     act-fluent-logger-rails (0.2.0)
       fluent-logger
-      rails (>= 3.2, < 5.1)
+      rails (>= 4, < 5.1)
 
 GEM
   remote: https://rubygems.org/
