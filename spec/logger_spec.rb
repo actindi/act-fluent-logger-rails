@@ -36,24 +36,38 @@ EOF
     }
   end
 
+  let(:log_tags) {
+    { uuid: :uuid,
+      foo: ->(request) { 'foo_value' }
+    }
+  }
+
   let(:logger) {
     ActFluentLoggerRails::Logger.new(config_file: File.new(@config_file.path),
-                                     log_tags: {
-                                       uuid: :uuid,
-                                       foo: ->(request) { request.foo }
-                                     })
+                                     log_tags: log_tags)
   }
 
   let(:request) {
-    double('request', uuid: 'uuid_value', foo: 'foo_value')
+    double('request', uuid: 'uuid_value')
   }
 
   describe 'logging' do
 
     describe 'basic' do
       it 'info' do
+        # see Rails::Rack::compute_tags
+        tags = log_tags.values.collect do |tag|
+          case tag
+          when Proc
+            tag.call(request)
+          when Symbol
+            request.send(tag)
+          else
+            tag
+          end
+        end
         logger[:abc] = 'xyz'
-        logger.tagged([request]) { logger.info('hello') }
+        logger.tagged(tags) { logger.info('hello') }
         expect(@my_logger.log).to eq([['foo', {
                                          abc: 'xyz',
                                          messages: ['hello'],
@@ -62,7 +76,7 @@ EOF
                                          foo: 'foo_value'
                                        } ]])
         @my_logger.clear
-        logger.tagged([request]) { logger.info('world'); logger.info('bye') }
+        logger.tagged(tags) { logger.info('world'); logger.info('bye') }
         expect(@my_logger.log).to eq([['foo', {
                                          messages: ['world', 'bye'],
                                          severity: 'INFO',
