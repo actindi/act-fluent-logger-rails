@@ -1,7 +1,7 @@
 PATH
   remote: ../
   specs:
-    act-fluent-logger-rails (0.2.0)
+    act-fluent-logger-rails (0.3.0)
       fluent-logger
       rails (>= 4, < 5.1)
 
