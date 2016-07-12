@@ -1,3 +1,7 @@
+## 0.3.0 / July 12 2016
+
+* Rails 5
+
 ## 0.2.0 / Mar 20 2016
 
 * Add severity_key parameter. Is is The key of severity(DEBUG, INFO, WARN, ERROR).
