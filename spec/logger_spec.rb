@@ -4,10 +4,10 @@ require 'tempfile'
 
 describe ActFluentLoggerRails::Logger do
   before do
-    Rails = double("Rails") unless self.class.const_defined?(:Rails)
-    Rails.stub(env: "test")
-    Rails.stub_chain(:application, :config, :log_level).and_return(:debug)
-    Rails.stub_chain(:application, :config, :log_tags=)
+    stub_const('Rails', Class.new) unless defined?(Rails)
+    allow(Rails).to receive(:env).and_return('test')
+    allow(Rails).to receive_message_chain(:application, :config, :log_level).and_return(:debug)
+    allow(Rails).to receive_message_chain(:application, :config, :log_tags=)
 
     class MyLogger
       attr_accessor :log
@@ -22,7 +22,7 @@ describe ActFluentLoggerRails::Logger do
       end
     end
     @my_logger = MyLogger.new
-    Fluent::Logger::FluentLogger.stub(:new) { @my_logger }
+    allow(Fluent::Logger::FluentLogger).to receive(:new).and_return(@my_logger)
 
     @config_file = Tempfile.new('fluent-logger-config')
     @config_file.close(false)
@@ -36,24 +36,38 @@ EOF
     }
   end
 
+  let(:log_tags) {
+    { uuid: :uuid,
+      foo: ->(request) { 'foo_value' }
+    }
+  }
+
   let(:logger) {
     ActFluentLoggerRails::Logger.new(config_file: File.new(@config_file.path),
-                                     log_tags: {
-                                       uuid: :uuid,
-                                       foo: ->(request) { request.foo }
-                                     })
+                                     log_tags: log_tags)
   }
 
   let(:request) {
-    double('request', uuid: 'uuid_value', foo: 'foo_value')
+    double('request', uuid: 'uuid_value')
   }
 
   describe 'logging' do
 
     describe 'basic' do
       it 'info' do
+        # see Rails::Rack::compute_tags
+        tags = log_tags.values.collect do |tag|
+          case tag
+          when Proc
+            tag.call(request)
+          when Symbol
+            request.send(tag)
+          else
+            tag
+          end
+        end
         logger[:abc] = 'xyz'
-        logger.tagged([request]) { logger.info('hello') }
+        logger.tagged(tags) { logger.info('hello') }
         expect(@my_logger.log).to eq([['foo', {
                                          abc: 'xyz',
                                          messages: ['hello'],
@@ -62,7 +76,7 @@ EOF
                                          foo: 'foo_value'
                                        } ]])
         @my_logger.clear
-        logger.tagged([request]) { logger.info('world'); logger.info('bye') }
+        logger.tagged(tags) { logger.info('world'); logger.info('bye') }
         expect(@my_logger.log).to eq([['foo', {
                                          messages: ['world', 'bye'],
                                          severity: 'INFO',

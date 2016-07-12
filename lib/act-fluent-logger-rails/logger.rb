@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 require 'fluent-logger'
 require 'active_support/core_ext'
 require 'uri'
@@ -15,7 +14,19 @@ module ActFluentLoggerRails
                  log_tags: {},
                  settings: {},
                  flush_immediately: false)
-      Rails.application.config.log_tags = [ ->(request) { request } ] unless log_tags.empty?
+      Rails.application.config.log_tags = log_tags.values
+      if Rails.application.config.respond_to?(:action_cable)
+        Rails.application.config.action_cable.log_tags = log_tags.values.map do |x|
+          case
+          when x.respond_to?(:call)
+            x
+          when x.is_a?(Symbol)
+            -> (request) { request.send(x) }
+          else
+            -> (request) { x }
+          end
+        end
+      end
       if (0 == settings.length)
         fluent_config = if ENV["FLUENTD_URL"]
                           self.parse_url(ENV["FLUENTD_URL"])
@@ -53,7 +64,7 @@ module ActFluentLoggerRails
     end
 
     def tagged(*tags)
-      @request = tags[0][0]
+      @tags = tags.flatten
       yield self
     ensure
       flush
@@ -74,6 +85,7 @@ module ActFluentLoggerRails
       @messages = []
       @log_tags = log_tags
       @map = {}
+      after_initialize if respond_to? :after_initialize
     end
 
     def add(severity, message = nil, progname = nil, &block)
@@ -124,19 +136,15 @@ module ActFluentLoggerRails
                  end
       @map[:messages] = messages
       @map[@severity_key] = format_severity(@severity)
-      @log_tags.each do |k, v|
-        @map[k] = case v
-                  when Proc
-                    v.call(@request)
-                  when Symbol
-                    @request.send(v)
-                  else
-                    v
-                  end rescue :error
+      if @tags
+        @log_tags.keys.zip(@tags).each do |k, v|
+          @map[k] = v
+        end
       end
       @fluent_logger.post(@tag, @map)
       @severity = 0
       @messages.clear
+      @tags = nil
       @map.clear
     end
 
