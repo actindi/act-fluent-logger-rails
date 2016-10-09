@@ -1,3 +1,8 @@
+appraise 'rails-3.2' do
+  gem 'railties', '3.2.22'
+  gem 'activesupport', '3.2.22'
+end
+
 appraise 'rails-4.0' do
   gem 'railties', '4.0.13'
   gem 'activesupport', '4.0.13'
