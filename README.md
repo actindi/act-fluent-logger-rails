@@ -44,14 +44,14 @@ Don't use config.log_tags.
       tag:           'foo'
       messages_type: 'string'
       severity_key:  'level'     # default severity
-    
+
     test:
       fluent_host:   '127.0.0.1'
       fluent_port:   24224
       tag:           'foo'
       messages_type: 'string'
       severity_key:  'level'     # default severity
-    
+
     production:
       fluent_host:   '127.0.0.1'
       fluent_port:   24224
@@ -93,6 +93,17 @@ Don't use config.log_tags.
 You can add any tags at run time.
 
    logger[:foo] = "foo value"
+
+### Usage as a standalone logger
+
+Typical usage is as a replacement for the default Rails logger, in which case
+messages are collected and flushed automatically as part of the request
+lifecycle. If you wish to use it instead as a separate logger and log to it
+manually then it is necessary to initialize with the `flush_immediately` flag.
+
+```ruby
+ActFluentLoggerRails::Logger.new(flush_immediately: true)
+```
 
 
 ## Contributing
