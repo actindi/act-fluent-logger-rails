@@ -71,7 +71,7 @@ module ActFluentLoggerRails
     end
   end
 
-  class FluentLogger < ActiveSupport::Logger
+  class FluentLogger < (ActiveSupport.version.to_s > '4' ? ActiveSupport::Logger : ActiveSupport::BufferedLogger)
     def initialize(options, level, log_tags)
       self.level = level
       port    = options[:port]
