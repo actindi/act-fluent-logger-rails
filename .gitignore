@@ -6,6 +6,7 @@
 .yardoc
 /vendor
 Gemfile.lock
+gemfiles/*.lock
 InstalledFiles
 _yardoc
 coverage
