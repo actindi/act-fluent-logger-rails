@@ -1,3 +1,7 @@
+## 0.4.0 / April 29 2017
+
+* Rails 5.1
+
 ## 0.3.1 / August 18 2016
 
 * Replace dependency from rails to railties and activesupport.
