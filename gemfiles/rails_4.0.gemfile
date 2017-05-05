@@ -6,4 +6,4 @@ gem "appraisal"
 gem "railties", "4.0.13"
 gem "activesupport", "4.0.13"
 
-gemspec :path => "../"
+gemspec path: "../"
