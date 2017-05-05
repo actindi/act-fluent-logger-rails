@@ -3,7 +3,7 @@
 source "https://rubygems.org"
 
 gem "appraisal"
-gem "railties", "4.1.15"
-gem "activesupport", "4.1.15"
+gem "railties", "4.1.16"
+gem "activesupport", "4.1.16"
 
-gemspec :path => "../"
+gemspec path: "../"
