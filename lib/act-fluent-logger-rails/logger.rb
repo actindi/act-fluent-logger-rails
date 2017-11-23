@@ -106,6 +106,8 @@ module ActFluentLoggerRails
         when ::Exception
           "#{ message.message } (#{ message.class })\n" <<
             (message.backtrace || []).join("\n")
+        when ::Hash
+          message.to_json
         else
           message.inspect
         end
@@ -131,6 +133,8 @@ module ActFluentLoggerRails
       return if @messages.empty?
       messages = if @messages_type == :string
                    @messages.join("\n")
+                 elsif @messages_type == :hash
+                   merge_to_hash(@messages).to_json
                  else
                    @messages
                  end
@@ -146,6 +150,21 @@ module ActFluentLoggerRails
       @messages.clear
       @tags = nil
       @map.clear
+    end
+
+    def merge_to_hash(messages)
+      result_hash = {}
+      single_hash = {'custom_message' => ''}
+      messages.each do |message|
+        begin
+          single_hash = JSON.parse(message)
+        rescue JSON::ParserError
+          single_hash['custom_message'] += "#{message}\n"
+        ensure
+          result_hash.merge!(single_hash)
+        end
+      end
+      result_hash
     end
 
     def close
