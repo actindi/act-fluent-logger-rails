@@ -37,6 +37,7 @@ module ActFluentLoggerRails
           tag:  fluent_config['tag'],
           host: fluent_config['fluent_host'],
           port: fluent_config['fluent_port'],
+          nanosecond_precision: fluent_config['nanosecond_precision'],
           messages_type: fluent_config['messages_type'],
           severity_key: fluent_config['severity_key'],
         }
@@ -58,6 +59,7 @@ module ActFluentLoggerRails
         fluent_host: uri.host,
         fluent_port: uri.port,
         tag: uri.path[1..-1],
+        nanosecond_precision: params['nanosecond_precision'].try(:first),
         messages_type: params['messages_type'].try(:first),
         severity_key: params['severity_key'].try(:first),
       }.stringify_keys
@@ -76,11 +78,13 @@ module ActFluentLoggerRails
       self.level = level
       port    = options[:port]
       host    = options[:host]
+      nanosecond_precision = options[:nanosecond_precision]
       @messages_type = (options[:messages_type] || :array).to_sym
       @tag = options[:tag]
       @severity_key = (options[:severity_key] || :severity).to_sym
       @flush_immediately = options[:flush_immediately]
-      @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, host: host, port: port)
+      logger_opts = {host: host, port: port, nanosecond_precision: nanosecond_precision}
+      @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, logger_opts)
       @severity = 0
       @messages = []
       @log_tags = log_tags
