@@ -14,7 +14,7 @@ module ActFluentLoggerRails
                  log_tags: {},
                  settings: {},
                  flush_immediately: false)
-      Rails.application.config.log_tags = log_tags.values
+      Rails.application.config.log_tags = [ ->(request) { request } ] unless log_tags.empty?
       if Rails.application.config.respond_to?(:action_cable)
         Rails.application.config.action_cable.log_tags = log_tags.values.map do |x|
           case
