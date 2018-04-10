@@ -1,27 +1,30 @@
 language: ruby
 rvm:
-  - 2.0.0-p648
   - 2.1.10
-  - 2.2.7
-  - 2.3.4
-  - 2.4.1
+  - 2.2.10
+  - 2.3.7
+  - 2.4.4
+  - 2.5.1
 gemfile:
   - gemfiles/rails_4.0.gemfile
   - gemfiles/rails_4.1.gemfile
   - gemfiles/rails_4.2.gemfile
   - gemfiles/rails_5.0.gemfile
   - gemfiles/rails_5.1.gemfile
+  - gemfiles/rails_5.2.gemfile
 matrix:
   exclude:
-    - rvm: 2.0.0-p648
-      gemfile: gemfiles/rails_5.0.gemfile
-    - rvm: 2.0.0-p648
-      gemfile: gemfiles/rails_5.1.gemfile
     - rvm: 2.1.10
       gemfile: gemfiles/rails_5.0.gemfile
     - rvm: 2.1.10
       gemfile: gemfiles/rails_5.1.gemfile
-    - rvm: 2.4.1
+    - rvm: 2.1.10
+      gemfile: gemfiles/rails_5.2.gemfile
+    - rvm: 2.4.4
       gemfile: gemfiles/rails_4.0.gemfile
-    - rvm: 2.4.1
+    - rvm: 2.4.4
+      gemfile: gemfiles/rails_4.1.gemfile
+    - rvm: 2.5.1
+      gemfile: gemfiles/rails_4.0.gemfile
+    - rvm: 2.5.1
       gemfile: gemfiles/rails_4.1.gemfile
