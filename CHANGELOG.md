@@ -1,3 +1,8 @@
+## 0.5.0 / April 29 2017
+
+* Rails 5.2
+* support nanosecond_precision(Support nanosecond precision when sending logs to Fluentd #43)*
+
 ## 0.4.0 / April 29 2017
 
 * Rails 5.1
