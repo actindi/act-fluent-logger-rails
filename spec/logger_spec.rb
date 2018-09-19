@@ -52,7 +52,6 @@ EOF
   }
 
   describe 'logging' do
-
     describe 'basic' do
       it 'info' do
         # see Rails::Rack::compute_tags
@@ -85,6 +84,39 @@ EOF
                                        } ]])
       end
     end
+
+    it 'is thread safe' do
+      threads = ['hello', 'world'].map do |tag_name|
+        Thread.new {
+          if tag_name == 'hello'
+            request = double('request', uuid: tag_name)
+            tags = log_tags.values.collect do |tag|
+              case tag
+              when Proc
+                tag.call(request)
+              when Symbol
+                request.send(tag)
+              else
+                tag
+              end
+            end
+          else
+            tags = []
+          end
+          logger.info(tag_name)
+          logger.tagged(tags) { sleep(1) if tag_name == 'hello'; logger.info(tag_name) }
+        }
+      end
+
+      while threads.any?(&:alive?)
+        sleep(0.1)
+      end
+      expect(@my_logger.log).to match_array([
+        ['foo', { messages: ['hello', 'hello'], severity: 'INFO', uuid: 'hello', foo: 'foo_value' } ],
+        ['foo', { messages: ['world', 'world'], severity: 'INFO', uuid: nil, foo: nil } ]
+      ])
+    end
+
 
     describe 'frozen ascii-8bit string' do
       before do
