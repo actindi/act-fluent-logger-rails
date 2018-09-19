@@ -66,7 +66,8 @@ module ActFluentLoggerRails
     end
 
     def tagged(*tags)
-      @tags = tags.flatten
+      @tags_thread_key ||= "activesupport_tagged_logging_tags:#{object_id}".freeze
+      Thread.current[@tags_thread_key] = tags.flatten
       yield self
     ensure
       flush
@@ -140,16 +141,20 @@ module ActFluentLoggerRails
                  end
       @map[:messages] = messages
       @map[@severity_key] = format_severity(@severity)
-      if @tags
-        @log_tags.keys.zip(@tags).each do |k, v|
-          @map[k] = v
-        end
-      end
+      add_tags
+
       @fluent_logger.post(@tag, @map)
       @severity = 0
       @messages.clear
-      @tags = nil
+      Thread.current[@tags_thread_key] = nil if @tags_thread_key
       @map.clear
+    end
+
+    def add_tags
+      return unless @tags_thread_key && Thread.current[@tags_thread_key]
+      @log_tags.keys.zip(Thread.current[@tags_thread_key]).each do |k, v|
+        @map[k] = v
+      end
     end
 
     def close
