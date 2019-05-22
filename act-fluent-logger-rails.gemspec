@@ -20,6 +20,6 @@ Gem::Specification.new do |gem|
 
   gem.add_development_dependency "rspec", '~> 3.5.0'
   gem.add_runtime_dependency "fluent-logger"
-  gem.add_runtime_dependency "railties", ">= 4", "< 5.3"
-  gem.add_runtime_dependency "activesupport", ">= 4", "< 5.3"
+  gem.add_runtime_dependency "railties", ">= 4", "< 6.1"
+  gem.add_runtime_dependency "activesupport", ">= 4", "< 6.1"
 end
