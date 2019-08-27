@@ -89,7 +89,7 @@ module ActFluentLoggerRails
       @messages = []
       @log_tags = log_tags
       @map = {}
-      after_initialize if respond_to? :after_initialize
+      after_initialize if respond_to? :after_initialize && Rails::VERSION::MAJOR < 6
     end
 
     def add(severity, message = nil, progname = nil, &block)
