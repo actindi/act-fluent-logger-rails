@@ -66,7 +66,8 @@ module ActFluentLoggerRails
     end
 
     def tagged(*tags)
-      @tags = tags.flatten
+      @tags_thread_key ||= "fluentd_tagged_logging_tags:#{object_id}".freeze
+      Thread.current[@tags_thread_key] = tags.flatten
       yield self
     ensure
       flush
@@ -86,9 +87,7 @@ module ActFluentLoggerRails
       logger_opts = {host: host, port: port, nanosecond_precision: nanosecond_precision}
       @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, logger_opts)
       @severity = 0
-      @messages = []
       @log_tags = log_tags
-      @map = {}
       after_initialize if respond_to? :after_initialize
     end
 
@@ -115,41 +114,55 @@ module ActFluentLoggerRails
         end
 
       if message.encoding == Encoding::UTF_8
-        @messages << message
+        logger_messages << message
       else
-        @messages << message.dup.force_encoding(Encoding::UTF_8)
+        logger_messages << message.dup.force_encoding(Encoding::UTF_8)
       end
 
       flush if @flush_immediately
     end
 
     def [](key)
-      @map[key]
+      map[key]
     end
 
     def []=(key, value)
-      @map[key] = value
+      map[key] = value
     end
 
     def flush
-      return if @messages.empty?
+      return if logger_messages.empty?
       messages = if @messages_type == :string
-                   @messages.join("\n")
+                   logger_messages.join("\n")
                  else
-                   @messages
+                   logger_messages
                  end
-      @map[:messages] = messages
-      @map[@severity_key] = format_severity(@severity)
-      if @tags
-        @log_tags.keys.zip(@tags).each do |k, v|
-          @map[k] = v
-        end
-      end
-      @fluent_logger.post(@tag, @map)
+      map[:messages] = messages
+      map[@severity_key] = format_severity(@severity)
+      add_tags
+
+      @fluent_logger.post(@tag, map)
       @severity = 0
-      @messages.clear
-      @tags = nil
-      @map.clear
+      logger_messages.clear
+      Thread.current[@tags_thread_key] = nil if @tags_thread_key
+      map.clear
+    end
+
+    def add_tags
+      return unless @tags_thread_key && Thread.current.key?(@tags_thread_key)
+      @log_tags.keys.zip(Thread.current[@tags_thread_key]).each do |k, v|
+        map[k] = v
+      end
+    end
+
+    def logger_messages
+      @messages_thread_key ||= "fluentd_logger_messages:#{object_id}".freeze
+      Thread.current[@messages_thread_key] ||= []
+    end
+
+    def map
+      @map_thread_key ||= "fluentd_logger_map:#{object_id}".freeze
+      Thread.current[@map_thread_key] ||= {}
     end
 
     def close
