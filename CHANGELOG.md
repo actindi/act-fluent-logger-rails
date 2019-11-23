@@ -1,3 +1,8 @@
+## 0.6.0 / Nov 23 2019
+
+* Rails 6
+* Make Thread Safe
+
 ## 0.5.0 / April 29 2017
 
 * Rails 5.2
