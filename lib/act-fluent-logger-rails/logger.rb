@@ -2,6 +2,7 @@ require 'fluent-logger'
 require 'active_support/core_ext'
 require 'uri'
 require 'cgi'
+require 'rails/version'
 
 module ActFluentLoggerRails
 
@@ -88,7 +89,7 @@ module ActFluentLoggerRails
       @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, logger_opts)
       @severity = 0
       @log_tags = log_tags
-      after_initialize if respond_to? :after_initialize
+      after_initialize if respond_to?(:after_initialize) && Rails::VERSION::MAJOR < 6
     end
 
     def add(severity, message = nil, progname = nil, &block)
