@@ -1,3 +1,6 @@
+## 0.6.1 / Jan 8 2020
+* Fix warning printed when use Rails 6
+
 ## 0.6.0 / Nov 23 2019
 
 * Rails 6
