@@ -41,6 +41,7 @@ module ActFluentLoggerRails
           nanosecond_precision: fluent_config['nanosecond_precision'],
           messages_type: fluent_config['messages_type'],
           severity_key: fluent_config['severity_key'],
+          tls_options: fluent_config['tls_options']&.transform_keys { |k| k.to_sym }
         }
       end
 
@@ -86,6 +87,7 @@ module ActFluentLoggerRails
       @severity_key = (options[:severity_key] || :severity).to_sym
       @flush_immediately = options[:flush_immediately]
       logger_opts = {host: host, port: port, nanosecond_precision: nanosecond_precision}
+      logger_opts[:tls_options] = options[:tls_options] unless options[:tls_options].nil?
       @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, logger_opts)
       @severity = 0
       @log_tags = log_tags
