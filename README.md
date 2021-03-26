@@ -89,6 +89,9 @@ Don't use config.log_tags.
 2013-01-18T15:04:50+09:00 foo {"messages":["Started GET \"/\" for 127.0.0.1 at 2013-01-18 15:04:49 +0900","Processing by TopController#index as HTML","Completed 200 OK in 635ms (Views: 479.3ms | ActiveRecord: 39.6ms)"],"severity":"INFO"}
 ```
  * severity_key: The key of severity(DEBUG, INFO, WARN, ERROR).
+ * tls_options: A hash of tls options compatible with [fluent-logger-ruby](https://github.com/fluent/fluent-logger-ruby#tls-setting). The simplest being: 
+	 <pre>tls_options:
+	  use_default_ca: true</pre>
 
 You can add any tags at run time.
 
