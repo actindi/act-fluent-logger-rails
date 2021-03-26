@@ -162,6 +162,43 @@ EOF
       end
     end
 
+    describe 'tls_options' do
+      context 'does not has key' do
+        before do
+          File.open(@config_file.path, 'w') do |f|
+            f.puts <<EOF
+test:
+  fluent_host: '127.0.0.1'
+  fluent_port: 24224
+  tag:         'foo'
+EOF
+          end
+        end
+        it do
+          expect(::Fluent::Logger::FluentLogger).not_to receive(:new).with(nil, hash_including(tls_options: { use_default_ca: true }))
+          logger
+        end
+      end
+      context 'has key' do
+        before do
+          File.open(@config_file.path, 'w') do |f|
+            f.puts <<EOF
+test:
+  fluent_host: '127.0.0.1'
+  fluent_port: 24224
+  tag:         'foo'
+  tls_options:
+    use_default_ca: true
+EOF
+          end
+        end
+        it do
+          expect(::Fluent::Logger::FluentLogger).to receive(:new).with(nil, hash_including(tls_options: { use_default_ca: true }))
+          logger
+        end
+      end
+    end
+
     describe 'severity_key' do
       describe 'not specified' do
         it 'severity' do
