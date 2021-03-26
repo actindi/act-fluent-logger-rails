@@ -1,3 +1,6 @@
+## 0.6.3 / Mar 22 2020
+* Support tls_options #63
+
 ## 0.6.2 / Jan 8 2020
 * Rails 6.1
 
