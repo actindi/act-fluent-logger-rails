@@ -69,7 +69,7 @@ module ActFluentLoggerRails
 
     def tagged(*tags)
       @tags_thread_key ||= "fluentd_tagged_logging_tags:#{object_id}".freeze
-      Thread.current[@tags_thread_key] = tags.flatten
+      Thread.current[@tags_thread_key] = tags.length == 1 ? tags.flatten(1) : tags
       yield self
     ensure
       flush

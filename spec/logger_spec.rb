@@ -50,11 +50,22 @@ EOF
   let(:request) {
     double('request', uuid: 'uuid_value')
   }
-
+  let(:tags) {
+    # see Rails::Rack::compute_tags
+    log_tags.values.collect do |tag|
+      case tag
+      when Proc
+        tag.call(request)
+      when Symbol
+        request.send(tag)
+      else
+        tag
+      end
+    end
+  }
   describe 'logging' do
     describe 'basic' do
       it 'info' do
-        # see Rails::Rack::compute_tags
         tags = log_tags.values.collect do |tag|
           case tag
           when Proc
@@ -259,6 +270,101 @@ EOF
                                                   flush_immediately: false)
         logger.info('Immediately!')
         expect(@my_logger.log).to eq(nil)
+      end
+    end
+  end
+
+  describe 'value is an array' do
+    let(:log_tags) {
+      { uuid: :uuid,
+        array_value: :array_value,
+        foo: ->(request) { 'foo_value' },
+      }
+    }
+
+    let(:request) {
+      double('request', uuid: 'uuid_value', array_value: array_value)
+    }
+
+    describe 'tag values are passed as an Array' do
+      describe 'the array is empty' do
+        let(:array_value) { [] }
+
+        it 'associates the array values with the correct key' do
+          logger[:abc] = 'xyz'
+          logger.tagged(tags) { logger.info('hello') }
+          expect(@my_logger.log).to eq([['foo', {
+                                           abc: 'xyz',
+                                           messages: ['hello'],
+                                           severity: 'INFO',
+                                           uuid: 'uuid_value',
+                                           array_value: [],
+                                           foo: 'foo_value'
+                                         } ]])
+          @my_logger.clear
+          logger.tagged(tags) { logger.info('world'); logger.info('bye') }
+          expect(@my_logger.log).to eq([['foo', {
+                                           messages: ['world', 'bye'],
+                                           severity: 'INFO',
+                                           uuid: 'uuid_value',
+                                           array_value: [],
+                                           foo: 'foo_value'
+                                         } ]])
+        end
+      end
+
+      describe 'the array has multiple values' do
+        let(:array_value) { ['abc','def','ghi'] }
+
+        it 'associates the array values with the correct key' do
+          logger[:abc] = 'xyz'
+          logger.tagged(tags) { logger.info('hello') }
+          expect(@my_logger.log).to eq([['foo', {
+                                           abc: 'xyz',
+                                           messages: ['hello'],
+                                           severity: 'INFO',
+                                           uuid: 'uuid_value',
+                                           array_value: ['abc','def','ghi'],
+                                           foo: 'foo_value'
+                                         } ]])
+          @my_logger.clear
+          logger.tagged(tags) { logger.info('world'); logger.info('bye') }
+          expect(@my_logger.log).to eq([['foo', {
+                                           messages: ['world', 'bye'],
+                                           severity: 'INFO',
+                                           uuid: 'uuid_value',
+                                           array_value: ['abc','def','ghi'],
+                                           foo: 'foo_value'
+                                         } ]])
+        end
+      end
+    end
+
+    describe 'tag values are passed as individual arguments' do
+      describe 'the array has multiple values' do
+        let(:array_value) { ['abc','def','ghi'] }
+
+        it 'associates the array values with the correct key' do
+          logger[:abc] = 'xyz'
+          logger.tagged(*tags) { logger.info('hello') }
+          expect(@my_logger.log).to eq([['foo', {
+                                           abc: 'xyz',
+                                           messages: ['hello'],
+                                           severity: 'INFO',
+                                           uuid: 'uuid_value',
+                                           array_value: ['abc','def','ghi'],
+                                           foo: 'foo_value'
+                                         } ]])
+          @my_logger.clear
+          logger.tagged(*tags) { logger.info('world'); logger.info('bye') }
+          expect(@my_logger.log).to eq([['foo', {
+                                           messages: ['world', 'bye'],
+                                           severity: 'INFO',
+                                           uuid: 'uuid_value',
+                                           array_value: ['abc','def','ghi'],
+                                           foo: 'foo_value'
+                                         } ]])
+        end
       end
     end
   end
