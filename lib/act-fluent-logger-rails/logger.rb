@@ -6,6 +6,9 @@ require 'rails/version'
 
 module ActFluentLoggerRails
 
+  TAG_SEVERITY_KEY = :'@tag'
+  TAG_SEVERITY_SEPARATOR = '.'
+
   module Logger
 
     # Severity label for logging. (max 5 char)
@@ -85,7 +88,9 @@ module ActFluentLoggerRails
       nanosecond_precision = options[:nanosecond_precision]
       @messages_type = (options[:messages_type] || :array).to_sym
       @tag = options[:tag]
-      @severity_key = (options[:severity_key] || :severity).to_sym
+      @severity_key = (options[:severity_key] || 'severity').to_sym
+      fail ArgumentError, "tag cannot contain dots if severity_key is '#{TAG_SEVERITY_KEY}' (suffix)"  if
+        @severity_key == TAG_SEVERITY_KEY && @tag.include?(TAG_SEVERITY_SEPARATOR)
       @flush_immediately = options[:flush_immediately]
       logger_opts = {host: host, port: port, nanosecond_precision: nanosecond_precision}
       logger_opts[:tls_options] = options[:tls_options] unless options[:tls_options].nil?
@@ -142,10 +147,10 @@ module ActFluentLoggerRails
                    logger_messages
                  end
       map[:messages] = messages
-      map[@severity_key] = format_severity(@severity)
+      add_severity
       add_tags
 
-      @fluent_logger.post(@tag, map)
+      @fluent_logger.post tag, map
       @severity = 0
       logger_messages.clear
       Thread.current[@tags_thread_key] = nil if @tags_thread_key
@@ -171,6 +176,18 @@ module ActFluentLoggerRails
       @log_tags.keys.zip(Thread.current[@tags_thread_key]).each do |k, v|
         map[k] = v
       end
+    end
+
+    def tag
+      if @severity_key == TAG_SEVERITY_KEY
+        @tag + TAG_SEVERITY_SEPARATOR + format_severity(@severity).downcase
+      else
+        @tag
+      end
+    end
+    def add_severity
+      map[@severity_key] = format_severity(@severity)  unless
+        @severity_key == TAG_SEVERITY_KEY
     end
 
     def logger_messages
