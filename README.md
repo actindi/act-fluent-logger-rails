@@ -123,3 +123,7 @@ gem install appraisal
 bundle exec appraisal bundle
 bundle exec appraisal rake
 ```
+or (in a dockerised environment)
+```
+bin/test
+```

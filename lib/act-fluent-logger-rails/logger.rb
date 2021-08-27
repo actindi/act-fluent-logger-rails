@@ -11,7 +11,7 @@ module ActFluentLoggerRails
     # Severity label for logging. (max 5 char)
     SEV_LABEL = %w(DEBUG INFO WARN ERROR FATAL ANY)
 
-    def self.new(config_file: Rails.root.join("config", "fluent-logger.yml"),
+    def self.new(config_file: nil,
                  log_tags: {},
                  settings: {},
                  flush_immediately: false)
@@ -28,10 +28,11 @@ module ActFluentLoggerRails
           end
         end
       end
-      if (0 == settings.length)
+      if settings.empty?
         fluent_config = if ENV["FLUENTD_URL"]
                           self.parse_url(ENV["FLUENTD_URL"])
                         else
+                          config_file ||= Rails.root.join('config', 'fluent-logger.yml')
                           YAML.load(ERB.new(config_file.read).result)[Rails.env]
                         end
         settings = {
@@ -151,6 +152,20 @@ module ActFluentLoggerRails
       map.clear
     end
 
+    def close
+      @fluent_logger.close
+    end
+
+    def level
+      @level
+    end
+
+    def level=(l)
+      @level = l
+    end
+
+    private
+
     def add_tags
       return unless @tags_thread_key && Thread.current.key?(@tags_thread_key)
       @log_tags.keys.zip(Thread.current[@tags_thread_key]).each do |k, v|
@@ -166,18 +181,6 @@ module ActFluentLoggerRails
     def map
       @map_thread_key ||= "fluentd_logger_map:#{object_id}".freeze
       Thread.current[@map_thread_key] ||= {}
-    end
-
-    def close
-      @fluent_logger.close
-    end
-
-    def level
-      @level
-    end
-
-    def level=(l)
-      @level = l
     end
 
     def format_severity(severity)

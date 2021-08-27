@@ -1,0 +1,11 @@
+version: '2.1'
+services:
+  tester:
+    build:
+      context: ..
+      dockerfile: spec/Dockerfile
+    volumes:
+      - ..:/act-fluent-logger-rails
+    tmpfs:
+      - /act-fluent-logger-rails/gemfiles
+    command: sh -c 'bin/appraisal install && bin/appraisal rake spec'
