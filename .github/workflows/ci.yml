@@ -1,0 +1,25 @@
+name: CI
+
+on: [push,pull_request]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        ruby: [2.4, 2.5, 2.6, 2.7, 3.0, head]
+        gemfile: [rails_5_0, rails_5_1, rails_5_2, rails_6_0, rails_6_1]
+    runs-on: ${{ matrix.os }}
+    env:
+      BUNDLE_GEMFILE: gemfiles/${{ matrix.gemfile }}.gemfile
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: ${{ matrix.ruby }}
+        bundler-cache: true
+    - name: Test
+      run: |
+        bundle exec rake rspec
