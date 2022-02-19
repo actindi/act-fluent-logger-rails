@@ -1,3 +1,8 @@
+## 0.6.4 / Feb 19 2022
+* Rails 7
+* Fix the name of the gemfile used by Appraisal
+* Replace Travis CI with GitHub Actions
+
 ## 0.6.3 / Mar 22 2020
 * Support tls_options #63
 
