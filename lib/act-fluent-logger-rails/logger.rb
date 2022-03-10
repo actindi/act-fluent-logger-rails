@@ -14,7 +14,8 @@ module ActFluentLoggerRails
     def self.new(config_file: Rails.root.join("config", "fluent-logger.yml"),
                  log_tags: {},
                  settings: {},
-                 flush_immediately: false)
+                 flush_immediately: false,
+                 use_nonblock: true)
       Rails.application.config.log_tags = log_tags.values
       if Rails.application.config.respond_to?(:action_cable)
         Rails.application.config.action_cable.log_tags = log_tags.values.map do |x|
@@ -46,6 +47,7 @@ module ActFluentLoggerRails
       end
 
       settings[:flush_immediately] ||= flush_immediately
+      settings[:use_nonblock] ||= use_nonblock
 
       level = SEV_LABEL.index(Rails.application.config.log_level.to_s.upcase)
       logger = ActFluentLoggerRails::FluentLogger.new(settings, level, log_tags)
@@ -74,6 +76,11 @@ module ActFluentLoggerRails
     ensure
       flush
     end
+
+    def push_tags(*tags)
+      @tags_thread_key ||= "fluentd_tagged_logging_tags:#{object_id}".freeze
+      Thread.current[@tags_thread_key] = tags.flatten
+    end
   end
 
   class FluentLogger < ActiveSupport::Logger
@@ -88,10 +95,15 @@ module ActFluentLoggerRails
       @flush_immediately = options[:flush_immediately]
       logger_opts = {host: host, port: port, nanosecond_precision: nanosecond_precision}
       logger_opts[:tls_options] = options[:tls_options] unless options[:tls_options].nil?
+      logger_opts[:use_nonblock] = options[:use_nonblock]
       @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, logger_opts)
       @severity = 0
       @log_tags = log_tags
       after_initialize if respond_to?(:after_initialize) && Rails::VERSION::MAJOR < 6
+    end
+
+    def auto_flushing=(flush)
+      @flush_immediately = flush
     end
 
     def add(severity, message = nil, progname = nil, &block)
@@ -112,16 +124,19 @@ module ActFluentLoggerRails
         when ::Exception
           "#{ message.message } (#{ message.class })\n" <<
             (message.backtrace || []).join("\n")
+        when ::Hash
+          message
         else
           message.inspect
         end
 
-      if message.encoding == Encoding::UTF_8
-        logger_messages << message
-      else
-        logger_messages << message.dup.force_encoding(Encoding::UTF_8)
-      end
-
+      logger_messages << if message.is_a?(String) && message.encoding == Encoding::UTF_8
+                           [collect_tags, severity, message]
+                         elsif message.is_a?(String)
+                           [collect_tags, severity, message.dup.force_encoding(Encoding::UTF_8)]
+                         else
+                           [collect_tags, severity, message]
+                         end
       flush if @flush_immediately
     end
 
@@ -135,16 +150,19 @@ module ActFluentLoggerRails
 
     def flush
       return if logger_messages.empty?
-      messages = if @messages_type == :string
-                   logger_messages.join("\n")
-                 else
-                   logger_messages
-                 end
-      map[:messages] = messages
-      map[@severity_key] = format_severity(@severity)
-      add_tags
 
-      @fluent_logger.post(@tag, map)
+      logger_messages.each do |message|
+        log = map.dup
+        log.merge!(message[0]) # tags
+        log[@severity_key] = format_severity(message[1]) # log level
+        if message[2].is_a?(String) # log data
+          log[:messages] = message[2]
+        else
+          log.merge!(message[2])
+        end
+        @fluent_logger.post(@tag, log)
+      end
+
       @severity = 0
       logger_messages.clear
       Thread.current[@tags_thread_key] = nil if @tags_thread_key
@@ -156,6 +174,16 @@ module ActFluentLoggerRails
       @log_tags.keys.zip(Thread.current[@tags_thread_key]).each do |k, v|
         map[k] = v
       end
+    end
+
+    def collect_tags
+      return {} unless @tags_thread_key && Thread.current.key?(@tags_thread_key)
+
+      tags = {}
+      @log_tags.keys.zip(Thread.current[@tags_thread_key]).each do |k, v|
+        tags[k] = v
+      end
+      tags
     end
 
     def logger_messages

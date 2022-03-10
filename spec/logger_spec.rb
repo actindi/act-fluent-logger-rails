@@ -69,7 +69,7 @@ EOF
         logger.tagged(tags) { logger.info('hello') }
         expect(@my_logger.log).to eq([['foo', {
                                          abc: 'xyz',
-                                         messages: ['hello'],
+                                         messages: 'hello',
                                          severity: 'INFO',
                                          uuid: 'uuid_value',
                                          foo: 'foo_value'
@@ -77,11 +77,17 @@ EOF
         @my_logger.clear
         logger.tagged(tags) { logger.info('world'); logger.info('bye') }
         expect(@my_logger.log).to eq([['foo', {
-                                         messages: ['world', 'bye'],
+                                         messages: 'world',
                                          severity: 'INFO',
                                          uuid: 'uuid_value',
                                          foo: 'foo_value'
-                                       } ]])
+                                       } ],
+                                      ['foo', {
+                                        messages: 'bye',
+                                        severity: 'INFO',
+                                        uuid: 'uuid_value',
+                                        foo: 'foo_value'
+                                      } ]])
       end
     end
 
@@ -112,9 +118,11 @@ EOF
         sleep(0.1)
       end
       expect(@my_logger.log).to match_array([
-        ['foo', { messages: ['hello', 'hello'], severity: 'INFO', uuid: 'hello', foo: 'foo_value' } ],
-        ['foo', { messages: ['world', 'world'], severity: 'INFO', uuid: nil, foo: nil } ]
-      ])
+                                              ["foo", {severity: "INFO", messages: "world"}],
+                                              ["foo", {uuid: nil, foo: nil, severity: "INFO", messages: "world"}],
+                                              ["foo", {severity: "INFO", messages: "hello"}],
+                                              ["foo", {uuid: "hello", foo: "foo_value", severity: "INFO", messages: "hello"}]
+                                            ])
     end
 
 
@@ -133,7 +141,8 @@ EOF
           logger.info(ascii)
           logger.info('咲く')
         }
-        expect(@my_logger.log[0][1][:messages]).to eq("花\n咲く")
+        expect(@my_logger.log[0][1][:messages]).to eq("花")
+        expect(@my_logger.log[1][1][:messages]).to eq("咲く")
         expect(ascii.encoding).to eq(Encoding::ASCII_8BIT)
       end
     end
@@ -146,7 +155,7 @@ EOF
           logger.tagged([request]) {
             logger.error(e)
           }
-          expect(@my_logger.log[0][1][:messages][0]).
+          expect(@my_logger.log[0][1][:messages]).
             to match(%r|divided by 0 \(ZeroDivisionError\).*spec/logger_spec\.rb:|m)
         end
       end
@@ -158,7 +167,7 @@ EOF
         logger.tagged([request]) {
           logger.info(x)
         }
-        expect(@my_logger.log[0][1][:messages][0]).to eq(x.inspect)
+        expect(@my_logger.log[0][1][:messages]).to eq(x.inspect)
       end
     end
 
@@ -249,7 +258,7 @@ EOF
         logger = ActFluentLoggerRails::Logger.new(config_file: File.new(@config_file.path),
                                                   flush_immediately: true)
         logger.info('Immediately!')
-        expect(@my_logger.log[0][1][:messages][0]).to eq('Immediately!')
+        expect(@my_logger.log[0][1][:messages]).to eq('Immediately!')
       end
     end
 
