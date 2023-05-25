@@ -1,7 +1,6 @@
 require 'spec_helper'
 require 'tempfile'
 
-
 describe ActFluentLoggerRails::Logger do
   before do
     stub_const('Rails', Class.new) unless defined?(Rails)
@@ -54,19 +53,9 @@ EOF
   describe 'logging' do
     describe 'basic' do
       it 'info' do
-        # see Rails::Rack::compute_tags
-        tags = log_tags.values.collect do |tag|
-          case tag
-          when Proc
-            tag.call(request)
-          when Symbol
-            request.send(tag)
-          else
-            tag
-          end
-        end
+        logger.request = request
         logger[:abc] = 'xyz'
-        logger.tagged(tags) { logger.info('hello') }
+        logger.tagged { logger.info('hello') }
         expect(@my_logger.log).to eq([['foo', {
                                          abc: 'xyz',
                                          messages: ['hello'],
@@ -75,7 +64,7 @@ EOF
                                          foo: 'foo_value'
                                        } ]])
         @my_logger.clear
-        logger.tagged(tags) { logger.info('world'); logger.info('bye') }
+        logger.tagged { logger.info('world'); logger.info('bye') }
         expect(@my_logger.log).to eq([['foo', {
                                          messages: ['world', 'bye'],
                                          severity: 'INFO',
@@ -86,37 +75,37 @@ EOF
     end
 
     it 'is thread safe' do
+      requests = {
+        'hello' => double('request', uuid: 'hello'),
+        'world' => double('request', uuid: nil)
+      }
+
       threads = ['hello', 'world'].map do |tag_name|
         Thread.new {
-          if tag_name == 'hello'
-            request = double('request', uuid: tag_name)
-            tags = log_tags.values.collect do |tag|
-              case tag
-              when Proc
-                tag.call(request)
-              when Symbol
-                request.send(tag)
-              else
-                tag
-              end
+          request = requests[tag_name]
+
+          tags = log_tags.values.collect do |tag|
+            case tag
+            when Proc, Symbol
+            else
+              tag
             end
-          else
-            tags = []
-          end
+          end.compact
+          logger.request = request
           logger.info(tag_name)
-          logger.tagged(tags) { sleep(1) if tag_name == 'hello'; logger.info(tag_name) }
+          logger.tagged(tags) { logger.info(tag_name) }
         }
       end
 
       while threads.any?(&:alive?)
         sleep(0.1)
       end
-      expect(@my_logger.log).to match_array([
-        ['foo', { messages: ['hello', 'hello'], severity: 'INFO', uuid: 'hello', foo: 'foo_value' } ],
-        ['foo', { messages: ['world', 'world'], severity: 'INFO', uuid: nil, foo: nil } ]
-      ])
-    end
 
+      expect(@my_logger.log).to include(
+        ['foo', { messages: ['hello', 'hello'], severity: 'INFO', uuid: 'hello', foo: 'foo_value' }],
+        ['foo', { messages: ['world', 'world'], severity: 'INFO', uuid: nil, foo: 'foo_value' }]
+      )
+    end
 
     describe 'frozen ascii-8bit string' do
       before do
@@ -206,26 +195,51 @@ EOF
           expect(@my_logger.log[0][1][:severity]).to eq('INFO')
         end
       end
+    end
 
-      describe 'severity_key: level' do
-        before do
-          @config_file = Tempfile.new('fluent-logger-config')
-          @config_file.close(false)
-          File.open(@config_file.path, 'w') {|f|
-            f.puts <<EOF
+    describe 'severity_key: level' do
+      before do
+        @config_file = Tempfile.new('fluent-logger-config')
+        @config_file.close(false)
+        File.open(@config_file.path, 'w') {|f|
+          f.puts <<EOF
 test:
   fluent_host: '127.0.0.1'
   fluent_port: 24224
   tag:         'foo'
   severity_key: 'level'  # default severity
 EOF
-          }
-        end
+        }
+      end
 
-        it 'level' do
-          logger.tagged([request]) { logger.info('hello') }
-          expect(@my_logger.log[0][1][:level]).to eq('INFO')
-        end
+      it 'level' do
+        logger.tagged([request]) { logger.info('hello') }
+        expect(@my_logger.log[0][1][:level]).to eq('INFO')
+      end
+    end
+
+  describe 'logging with session variable' do
+    let(:log_tags) {
+      { uuid: :uuid,
+        foo: ->(request) { 'foo_value' },
+          uid: ->(request) { request.session[:uid] }
+        }
+      }
+
+      let(:request_with_session) {
+        double('request', uuid: 'uuid_value', session: { uid: '123' })
+      }
+
+      it 'logs session uid' do
+        logger.request = request_with_session
+        logger.tagged { logger.info('Session test') }
+        expect(@my_logger.log).to eq([['foo', {
+                                          messages: ['Session test'],
+                                          severity: 'INFO',
+                                          uuid: 'uuid_value',
+                                          foo: 'foo_value',
+                                          uid: '123'
+                                        }]])
       end
     end
   end

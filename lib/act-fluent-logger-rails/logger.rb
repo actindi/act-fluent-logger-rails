@@ -96,6 +96,7 @@ module ActFluentLoggerRails
 
     def add(severity, message = nil, progname = nil, &block)
       return true if severity < level
+
       message = (block_given? ? block.call : progname) if message.blank?
       return true if message.blank?
       add_message(severity, message)
@@ -153,8 +154,17 @@ module ActFluentLoggerRails
 
     def add_tags
       return unless @tags_thread_key && Thread.current.key?(@tags_thread_key)
-      @log_tags.keys.zip(Thread.current[@tags_thread_key]).each do |k, v|
-        map[k] = v
+
+      @log_tags.each do |k, v|
+        value = case v
+                when Proc
+                  v.call(request)
+                when Symbol
+                  request.send(v) if request.respond_to?(v)
+                else
+                  v
+                end
+        map[k] = value
       end
     end
 
@@ -182,6 +192,16 @@ module ActFluentLoggerRails
 
     def format_severity(severity)
       ActFluentLoggerRails::Logger::SEV_LABEL[severity] || 'ANY'
+    end
+
+    def request
+      @request_thread_key ||= "fluentd_logger_request:#{object_id}".freeze
+      Thread.current[@request_thread_key]
+    end
+
+    def request=(req)
+      @request_thread_key ||= "fluentd_logger_request:#{object_id}".freeze
+      Thread.current[@request_thread_key] = req
     end
   end
 end

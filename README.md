@@ -33,6 +33,19 @@ in config/environments/production.rb
           })
 
 Don't use config.log_tags.
+Note that you need to do as follows if you want to access the request like in the above example.
+
+## Accessing Request in Logs
+
+In certain scenarios, you might want to log request-specific information. This could include data from request headers, cookies, or any other data that's specific to an individual request. To do so, you need to include the ActFluentLoggerRails::Middleware in your application's middleware stack. This middleware attaches the request to the logger, making it accessible during the logging process.
+
+To include the middleware, add the following line to your application.rb file:
+
+```ruby
+config.middleware.insert_after ActionDispatch::RequestId, ActFluentLoggerRails::Middleware
+```
+
+Note that versions prior to 0.8 do not support this feature.
 
 ### To define where to send messages to, either:
 
@@ -89,7 +102,7 @@ Don't use config.log_tags.
 2013-01-18T15:04:50+09:00 foo {"messages":["Started GET \"/\" for 127.0.0.1 at 2013-01-18 15:04:49 +0900","Processing by TopController#index as HTML","Completed 200 OK in 635ms (Views: 479.3ms | ActiveRecord: 39.6ms)"],"severity":"INFO"}
 ```
  * severity_key: The key of severity(DEBUG, INFO, WARN, ERROR).
- * tls_options: A hash of tls options compatible with [fluent-logger-ruby](https://github.com/fluent/fluent-logger-ruby#tls-setting). The simplest being: 
+ * tls_options: A hash of tls options compatible with [fluent-logger-ruby](https://github.com/fluent/fluent-logger-ruby#tls-setting). The simplest being:
 	 <pre>tls_options:
 	  use_default_ca: true</pre>
 
