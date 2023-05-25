@@ -20,3 +20,4 @@ test/tmp
 test/version_tmp
 tmp
 .ruby-version
+spec/dummy_app/log/*.log

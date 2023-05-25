@@ -1,0 +1,6 @@
+test:
+  fluent_host:   '127.0.0.1'
+  fluent_port:   24224
+  tag:           'foo'
+  messages_type: 'string'
+  severity_key:  'level'     # default severity
