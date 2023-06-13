@@ -1,6 +1,7 @@
 $LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
 $LOAD_PATH.unshift(File.dirname(__FILE__))
 
+require 'action_view'
 require 'active_support'
 require 'active_support/deprecation'
 require 'active_support/core_ext/module'

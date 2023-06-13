@@ -1,4 +1,3 @@
-# -*- encoding: utf-8 -*-
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'act-fluent-logger-rails/version'
@@ -18,8 +17,10 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.require_paths = ["lib"]
 
-  gem.add_development_dependency "rspec", '~> 3.5.0'
+  gem.required_ruby_version = '>= 2.6'
+
+  gem.add_development_dependency "rspec", '~> 3.12.0'
   gem.add_runtime_dependency "fluent-logger"
-  gem.add_runtime_dependency "railties", ">= 4"
-  gem.add_runtime_dependency "activesupport", ">= 4"
+  gem.add_runtime_dependency "railties", ">= 6"
+  gem.add_runtime_dependency "activesupport", ">= 6"
 end
