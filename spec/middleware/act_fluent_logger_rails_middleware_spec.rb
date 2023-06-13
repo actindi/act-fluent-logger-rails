@@ -1,5 +1,4 @@
 require 'rails_helper'
-require 'rspec/rails'
 
 class Fluent::Logger::FluentLogger
   def pending_data
