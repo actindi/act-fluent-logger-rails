@@ -23,7 +23,7 @@ Bundler.require(*Rails.groups)
 module DummyApp
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 7.0
+    config.load_defaults Rails::VERSION::STRING.split('.').first(2).join('.')
 
     # Configuration for the application, engines, and railties goes here.
     #
