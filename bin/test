@@ -1,0 +1,12 @@
+#!/bin/bash -e
+test "$#" -gt 1 && echo "Unsupported args: $@" >&2 && exit 145
+cd "$( dirname "${BASH_SOURCE[0]}" )"/..
+
+TESTER=${1:-tester}
+
+export COMPOSE_FILE=spec/docker-compose.yml
+export COMPOSE_PROJECT_NAME=act-fluent-logger-rails_dev
+
+docker-compose rm -svf
+docker-compose build --pull --force-rm
+docker-compose run "$TESTER" && docker-compose rm -svf || docker-compose logs

@@ -22,7 +22,7 @@ describe ActFluentLoggerRails::Logger do
       end
     end
     @my_logger = MyLogger.new
-    allow(Fluent::Logger::FluentLogger).to receive(:new).and_return(@my_logger)
+    allow(Fluent::Logger::FluentLogger).to receive(:new).once.and_return(@my_logger)
 
     @config_file = Tempfile.new('fluent-logger-config')
     @config_file.close(false)
@@ -225,6 +225,33 @@ EOF
         it 'level' do
           logger.tagged([request]) { logger.info('hello') }
           expect(@my_logger.log[0][1][:level]).to eq('INFO')
+        end
+      end
+
+      describe 'severity_key: @tag (special case)' do
+
+        subject do
+          ActFluentLoggerRails::Logger.new settings: {
+                                             host: '127.0.0.1',
+                                             port: 24224,
+                                             tag: tag,
+                                             severity_key: '@tag'
+                                           }, log_tags: log_tags
+        end
+        let(:tag) {'foo'}
+
+        it "works" do
+          subject.tagged([request]) { subject.info('hello') }
+          expect(@my_logger.log[0][0]).to eq 'foo.info'
+        end
+
+        describe 'when tag contains dots' do
+
+          let(:tag) {'foo.foo'}
+
+          it "fails" do
+            expect{ subject }.to raise_error ArgumentError
+          end
         end
       end
     end

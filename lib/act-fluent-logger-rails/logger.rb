@@ -6,12 +6,15 @@ require 'rails/version'
 
 module ActFluentLoggerRails
 
+  TAG_SEVERITY_KEY = :'@tag'
+  TAG_SEVERITY_SEPARATOR = '.'
+
   module Logger
 
     # Severity label for logging. (max 5 char)
     SEV_LABEL = %w(DEBUG INFO WARN ERROR FATAL ANY)
 
-    def self.new(config_file: Rails.root.join("config", "fluent-logger.yml"),
+    def self.new(config_file: nil,
                  log_tags: {},
                  settings: {},
                  flush_immediately: false)
@@ -28,10 +31,11 @@ module ActFluentLoggerRails
           end
         end
       end
-      if (0 == settings.length)
+      if settings.empty?
         fluent_config = if ENV["FLUENTD_URL"]
                           self.parse_url(ENV["FLUENTD_URL"])
                         else
+                          config_file ||= Rails.root.join('config', 'fluent-logger.yml')
                           YAML.load(ERB.new(config_file.read).result)[Rails.env]
                         end
         settings = {
@@ -84,7 +88,9 @@ module ActFluentLoggerRails
       nanosecond_precision = options[:nanosecond_precision]
       @messages_type = (options[:messages_type] || :array).to_sym
       @tag = options[:tag]
-      @severity_key = (options[:severity_key] || :severity).to_sym
+      @severity_key = (options[:severity_key] || 'severity').to_sym
+      fail ArgumentError, "tag cannot contain dots if severity_key is '#{TAG_SEVERITY_KEY}' (suffix)"  if
+        @severity_key == TAG_SEVERITY_KEY && @tag.include?(TAG_SEVERITY_SEPARATOR)
       @flush_immediately = options[:flush_immediately]
       logger_opts = {host: host, port: port, nanosecond_precision: nanosecond_precision}
       logger_opts[:tls_options] = options[:tls_options] unless options[:tls_options].nil?
@@ -141,31 +147,14 @@ module ActFluentLoggerRails
                    logger_messages
                  end
       map[:messages] = messages
-      map[@severity_key] = format_severity(@severity)
+      add_severity
       add_tags
 
-      @fluent_logger.post(@tag, map)
+      @fluent_logger.post tag, map
       @severity = 0
       logger_messages.clear
       Thread.current[@tags_thread_key] = nil if @tags_thread_key
       map.clear
-    end
-
-    def add_tags
-      return unless @tags_thread_key && Thread.current.key?(@tags_thread_key)
-      @log_tags.keys.zip(Thread.current[@tags_thread_key]).each do |k, v|
-        map[k] = v
-      end
-    end
-
-    def logger_messages
-      @messages_thread_key ||= "fluentd_logger_messages:#{object_id}".freeze
-      Thread.current[@messages_thread_key] ||= []
-    end
-
-    def map
-      @map_thread_key ||= "fluentd_logger_map:#{object_id}".freeze
-      Thread.current[@map_thread_key] ||= {}
     end
 
     def close
@@ -178,6 +167,37 @@ module ActFluentLoggerRails
 
     def level=(l)
       @level = l
+    end
+
+    private
+
+    def add_tags
+      return unless @tags_thread_key && Thread.current.key?(@tags_thread_key)
+      @log_tags.keys.zip(Thread.current[@tags_thread_key]).each do |k, v|
+        map[k] = v
+      end
+    end
+
+    def tag
+      if @severity_key == TAG_SEVERITY_KEY
+        @tag + TAG_SEVERITY_SEPARATOR + format_severity(@severity).downcase
+      else
+        @tag
+      end
+    end
+    def add_severity
+      map[@severity_key] = format_severity(@severity)  unless
+        @severity_key == TAG_SEVERITY_KEY
+    end
+
+    def logger_messages
+      @messages_thread_key ||= "fluentd_logger_messages:#{object_id}".freeze
+      Thread.current[@messages_thread_key] ||= []
+    end
+
+    def map
+      @map_thread_key ||= "fluentd_logger_map:#{object_id}".freeze
+      Thread.current[@map_thread_key] ||= {}
     end
 
     def format_severity(severity)
