@@ -1,4 +1,5 @@
 ## Unreleased
+* Don't clear `config.log_tags` when another logger is created without `log_tags` (e.g. for Delayed::Job)
 * Send `log_tags` on Rails 7.2+, where `Rails::Rack::Logger` sets them with `push_tags` instead of `tagged`
 * Keep Array values of `log_tags` instead of flattening them into the following tags (based on #65)
 * Drop support for Rails < 7.0 and Ruby < 3.1
