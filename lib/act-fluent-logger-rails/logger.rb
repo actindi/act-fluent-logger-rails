@@ -76,8 +76,10 @@ module ActFluentLoggerRails
     end
 
     def tagged(*tags)
-      @tags_thread_key ||= "fluentd_tagged_logging_tags:#{object_id}".freeze
-      Thread.current[@tags_thread_key] = tags.flatten
+      request_local_set(:tags, tags.flatten)
+      # Create the buffers before yielding so fibers started during the request share them.
+      logger_messages
+      map
       yield self
     ensure
       flush
@@ -154,25 +156,61 @@ module ActFluentLoggerRails
       @fluent_logger.post(@tag, map)
       @severity = 0
       logger_messages.clear
-      Thread.current[@tags_thread_key] = nil if @tags_thread_key
+      request_local_set(:tags, nil)
       map.clear
     end
 
     def add_tags
-      return unless @tags_thread_key && Thread.current.key?(@tags_thread_key)
-      @log_tags.keys.zip(Thread.current[@tags_thread_key]).each do |k, v|
+      tags = request_local_get(:tags)
+      return unless tags
+      @log_tags.keys.zip(tags).each do |k, v|
         map[k] = v
       end
     end
 
     def logger_messages
-      @messages_thread_key ||= "fluentd_logger_messages:#{object_id}".freeze
-      Thread.current[@messages_thread_key] ||= []
+      request_local_get(:messages) || request_local_set(:messages, [])
     end
 
     def map
-      @map_thread_key ||= "fluentd_logger_map:#{object_id}".freeze
-      Thread.current[@map_thread_key] ||= {}
+      request_local_get(:map) || request_local_set(:map, {})
+    end
+
+    # Per-request state. On Ruby 3.2+ it is kept in fiber storage, which fibers started
+    # during the request (e.g. Async tasks under Falcon) inherit, so their messages are
+    # flushed with the request. New threads inherit fiber storage too, so each value
+    # records the thread that created it and values inherited by another thread are ignored.
+    if Fiber.respond_to?(:[])
+      def request_local_storage_get(key)
+        Fiber[key]
+      end
+
+      def request_local_storage_set(key, value)
+        Fiber[key] = value
+      end
+    else
+      def request_local_storage_get(key)
+        Thread.current[key]
+      end
+
+      def request_local_storage_set(key, value)
+        Thread.current[key] = value
+      end
+    end
+
+    def request_local_get(name)
+      owner, value = request_local_storage_get(request_local_key(name))
+      value if owner.equal?(Thread.current)
+    end
+
+    def request_local_set(name, value)
+      request_local_storage_set(request_local_key(name), value.nil? ? nil : [Thread.current, value])
+      value
+    end
+
+    def request_local_key(name)
+      @request_local_keys ||= {}
+      @request_local_keys[name] ||= :"act_fluent_logger_rails_#{name}_#{object_id}"
     end
 
     def close

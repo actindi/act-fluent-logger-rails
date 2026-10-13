@@ -1,4 +1,5 @@
 ## Unreleased
+* On Ruby 3.2+, keep per-request messages and tags in fiber storage so messages logged by fibers started during a request (e.g. Async tasks under Falcon) are flushed with the request
 * Drop support for Rails < 7.0 and Ruby < 3.1
 * Parse `FLUENTD_URL` query parameters with `URI.decode_www_form`, since `CGI.parse` is not available in Ruby 4.0
 * Require only the ActiveSupport core extensions the logger uses instead of all of `active_support/core_ext`, so Rails 7.0's `disable_to_s_conversion` is not preempted during `Bundler.require`
