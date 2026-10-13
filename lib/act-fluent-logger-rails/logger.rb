@@ -75,9 +75,8 @@ module ActFluentLoggerRails
       }.stringify_keys
     end
 
-    # Rails::Rack::Logger passes the values of log_tags, which are matched to their keys by position,
-    # so the values are not flattened: a log tag whose value is an Array keeps it as is.
-    # Rails 7.0 calls `tagged(tags)`, Rails 7.1 calls `tagged(*tags)`.
+    # Tags are matched to log_tags keys by position, so don't flatten Array values.
+    # Rails 7.0 passes them as one Array, 7.1 as separate arguments.
     def tagged(*tags)
       tags = tags.first if ActFluentLoggerRails::Logger.rails_passes_tags_as_array? && tags.length == 1 && tags.first.is_a?(Array)
       self.request_tags = tags
@@ -86,13 +85,13 @@ module ActFluentLoggerRails
       flush
     end
 
-    # Rails 7.2+ calls `push_tags(*tags)` at the start of a request, then `pop_tags` and flushes the logger at the end.
+    # Used instead of `tagged` by Rails 7.2+.
     def push_tags(*tags)
       self.request_tags = tags
       tags
     end
 
-    # The tags are cleared when the messages are flushed, which Rails does right after pop_tags.
+    # Keep the tags until flush, which Rails calls right after this.
     def pop_tags(count = 1)
       []
     end

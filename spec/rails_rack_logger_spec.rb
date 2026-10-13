@@ -3,9 +3,7 @@ require 'rack/mock'
 require 'action_dispatch'
 require 'rails/rack/logger'
 
-# Runs a request through the Rails::Rack::Logger of the Rails version under test.
-# Rails 7.0 calls `tagged(tags)`, 7.1 calls `tagged(*tags)`, and 7.2+ calls `push_tags(*tags)`,
-# then `pop_tags` and `ActiveSupport::LogSubscriber.flush_all!`.
+# Uses the real middleware, since each Rails version passes the tags differently.
 describe Rails::Rack::Logger do
   let(:posted) { [] }
 
@@ -31,7 +29,7 @@ describe Rails::Rack::Logger do
     fluent_logger.define_singleton_method(:post) { |_tag, map| posted << map.merge(messages: map[:messages].dup) }
     allow(Fluent::Logger::FluentLogger).to receive(:new).and_return(fluent_logger)
 
-    # Rails 7.1+ wraps config.logger in a BroadcastLogger
+    # Rails 7.1+ wraps the logger in a BroadcastLogger
     rails_logger = defined?(ActiveSupport::BroadcastLogger) ? ActiveSupport::BroadcastLogger.new(logger) : logger
     allow(Rails).to receive(:logger).and_return(rails_logger)
     allow(ActiveSupport::LogSubscriber).to receive(:logger).and_return(rails_logger)
