@@ -85,6 +85,32 @@ EOF
       end
     end
 
+    describe 'tags set at run time' do
+      it 'sends tags set during the request with its messages and clears them after the flush' do
+        logger.tagged([]) do
+          logger.info('before login')
+          logger[:uid] = 'user_1'
+          logger.info('after login')
+        end
+        logger.tagged([]) { logger.info('next request') }
+
+        expect(@my_logger.log).to eq([
+          ['foo', { uid: 'user_1', messages: ['before login', 'after login'], severity: 'INFO', uuid: nil, foo: nil }],
+          ['foo', { messages: ['next request'], severity: 'INFO', uuid: nil, foo: nil }]
+        ])
+      end
+
+      it 'sends tags only with the next message when flush_immediately is true' do
+        logger = ActFluentLoggerRails::Logger.new(config_file: File.new(@config_file.path),
+                                                  flush_immediately: true)
+        logger[:uid] = 'user_1'
+        logger.info('first')
+        logger.info('second')
+
+        expect(@my_logger.log.map { |_tag, map| [map[:messages], map[:uid]] }).to eq([[['first'], 'user_1'], [['second'], nil]])
+      end
+    end
+
     it 'is thread safe' do
       threads = ['hello', 'world'].map do |tag_name|
         Thread.new {
