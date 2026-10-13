@@ -13,9 +13,7 @@ Gem::Specification.new do |gem|
   gem.homepage      = "https://github.com/actindi/act-fluent-logger-rails"
   gem.license       = "MIT"
 
-  gem.files         = `git ls-files`.split($/)
-  gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
-  gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
+  gem.files         = Dir["lib/**/*.rb", "README.md", "CHANGELOG.md", "LICENSE.txt"]
   gem.require_paths = ["lib"]
   gem.required_ruby_version = ">= 3.1"
 
