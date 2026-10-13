@@ -1,4 +1,5 @@
 ## Unreleased
+* Parse `FLUENTD_URL` query parameters with `URI.decode_www_form`, since `CGI.parse` is not available in Ruby 4.0
 * Require only the ActiveSupport core extensions the logger uses instead of all of `active_support/core_ext`, so Rails 7.0's `disable_to_s_conversion` is not preempted during `Bundler.require`
 * Require `logger` before ActiveSupport so ActiveSupport < 7.1 loads with concurrent-ruby 1.3.5+
 

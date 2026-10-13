@@ -9,7 +9,6 @@ require 'active_support/core_ext/object/blank'
 require 'active_support/core_ext/object/try'
 require 'active_support/core_ext/hash/keys'
 require 'uri'
-require 'cgi'
 require 'rails/version'
 
 module ActFluentLoggerRails
@@ -63,15 +62,16 @@ module ActFluentLoggerRails
 
     def self.parse_url(fluentd_url)
       uri = URI.parse fluentd_url
-      params = CGI.parse uri.query
+      # CGI.parse was removed from the default cgi library in Ruby 4.0. Keep the first value of duplicate keys like CGI.parse did.
+      params = URI.decode_www_form(uri.query.to_s).each_with_object({}) { |(key, value), h| h[key] ||= value }
 
       {
         fluent_host: uri.host,
         fluent_port: uri.port,
         tag: uri.path[1..-1],
-        nanosecond_precision: params['nanosecond_precision'].try(:first),
-        messages_type: params['messages_type'].try(:first),
-        severity_key: params['severity_key'].try(:first),
+        nanosecond_precision: params['nanosecond_precision'],
+        messages_type: params['messages_type'],
+        severity_key: params['severity_key'],
       }.stringify_keys
     end
 
