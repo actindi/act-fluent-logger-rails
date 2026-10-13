@@ -1,5 +1,13 @@
 require 'fluent-logger'
-require 'active_support/core_ext'
+# Require only what this file uses. Loading all of active_support/core_ext during
+# Bundler.require would preempt app config such as Rails 7.0's disable_to_s_conversion.
+require 'logger'
+require 'active_support'
+require 'active_support/logger'
+require 'active_support/tagged_logging'
+require 'active_support/core_ext/object/blank'
+require 'active_support/core_ext/object/try'
+require 'active_support/core_ext/hash/keys'
 require 'uri'
 require 'cgi'
 require 'rails/version'

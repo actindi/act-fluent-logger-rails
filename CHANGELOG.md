@@ -1,3 +1,7 @@
+## Unreleased
+* Require only the ActiveSupport core extensions the logger uses instead of all of `active_support/core_ext`, so Rails 7.0's `disable_to_s_conversion` is not preempted during `Bundler.require`
+* Require `logger` before ActiveSupport so ActiveSupport < 7.1 loads with concurrent-ruby 1.3.5+
+
 ## 0.6.4 / Feb 19 2022
 * Rails 7
 * Fix the name of the gemfile used by Appraisal
