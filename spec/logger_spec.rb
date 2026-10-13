@@ -85,6 +85,28 @@ EOF
       end
     end
 
+    describe 'fibers and threads started during a request' do
+      it 'flushes messages logged by fibers started during the request with the request', if: Fiber.respond_to?(:[]) do
+        logger.tagged([]) do
+          logger.info('request')
+          Fiber.new { logger.info('task') }.resume
+        end
+
+        expect(@my_logger.log).to eq([
+          ['foo', { messages: ['request', 'task'], severity: 'INFO', uuid: nil, foo: nil }]
+        ])
+      end
+
+      it 'does not share buffered messages with threads started afterwards' do
+        logger.info('boot')
+        Thread.new { logger.tagged([]) { logger.info('request') } }.join
+
+        expect(@my_logger.log).to eq([
+          ['foo', { messages: ['request'], severity: 'INFO', uuid: nil, foo: nil }]
+        ])
+      end
+    end
+
     it 'is thread safe' do
       threads = ['hello', 'world'].map do |tag_name|
         Thread.new {
