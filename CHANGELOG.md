@@ -1,4 +1,6 @@
 ## Unreleased
+* Send `log_tags` on Rails 7.2+, where `Rails::Rack::Logger` sets them with `push_tags` instead of `tagged`
+* Keep Array values of `log_tags` instead of flattening them into the following tags (based on #65)
 * Drop support for Rails < 7.0 and Ruby < 3.1
 * Parse `FLUENTD_URL` query parameters with `URI.decode_www_form`, since `CGI.parse` is not available in Ruby 4.0
 * Require only the ActiveSupport core extensions the logger uses instead of all of `active_support/core_ext`, so Rails 7.0's `disable_to_s_conversion` is not preempted during `Bundler.require`

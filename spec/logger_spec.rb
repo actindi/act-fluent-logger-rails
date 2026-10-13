@@ -66,7 +66,7 @@ EOF
           end
         end
         logger[:abc] = 'xyz'
-        logger.tagged(tags) { logger.info('hello') }
+        logger.tagged(*tags) { logger.info('hello') }
         expect(@my_logger.log).to eq([['foo', {
                                          abc: 'xyz',
                                          messages: ['hello'],
@@ -75,7 +75,7 @@ EOF
                                          foo: 'foo_value'
                                        } ]])
         @my_logger.clear
-        logger.tagged(tags) { logger.info('world'); logger.info('bye') }
+        logger.tagged(*tags) { logger.info('world'); logger.info('bye') }
         expect(@my_logger.log).to eq([['foo', {
                                          messages: ['world', 'bye'],
                                          severity: 'INFO',
@@ -130,7 +130,7 @@ EOF
             tags = []
           end
           logger.info(tag_name)
-          logger.tagged(tags) { sleep(1) if tag_name == 'hello'; logger.info(tag_name) }
+          logger.tagged(*tags) { sleep(1) if tag_name == 'hello'; logger.info(tag_name) }
         }
       end
 

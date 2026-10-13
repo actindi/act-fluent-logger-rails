@@ -75,12 +75,30 @@ module ActFluentLoggerRails
       }.stringify_keys
     end
 
+    # Rails::Rack::Logger passes the values of log_tags, which are matched to their keys by position,
+    # so the values are not flattened: a log tag whose value is an Array keeps it as is.
+    # Rails 7.0 calls `tagged(tags)`, Rails 7.1 calls `tagged(*tags)`.
     def tagged(*tags)
-      @tags_thread_key ||= "fluentd_tagged_logging_tags:#{object_id}".freeze
-      Thread.current[@tags_thread_key] = tags.flatten
+      tags = tags.first if ActFluentLoggerRails::Logger.rails_passes_tags_as_array? && tags.length == 1 && tags.first.is_a?(Array)
+      self.request_tags = tags
       yield self
     ensure
       flush
+    end
+
+    # Rails 7.2+ calls `push_tags(*tags)` at the start of a request, then `pop_tags` and flushes the logger at the end.
+    def push_tags(*tags)
+      self.request_tags = tags
+      tags
+    end
+
+    # The tags are cleared when the messages are flushed, which Rails does right after pop_tags.
+    def pop_tags(count = 1)
+      []
+    end
+
+    def self.rails_passes_tags_as_array?
+      Rails::VERSION::MAJOR == 7 && Rails::VERSION::MINOR == 0
     end
   end
 
@@ -154,15 +172,26 @@ module ActFluentLoggerRails
       @fluent_logger.post(@tag, map)
       @severity = 0
       logger_messages.clear
-      Thread.current[@tags_thread_key] = nil if @tags_thread_key
+      self.request_tags = nil
       map.clear
     end
 
     def add_tags
-      return unless @tags_thread_key && Thread.current.key?(@tags_thread_key)
-      @log_tags.keys.zip(Thread.current[@tags_thread_key]).each do |k, v|
+      tags = request_tags
+      return unless tags
+      @log_tags.keys.zip(tags).each do |k, v|
         map[k] = v
       end
+    end
+
+    def request_tags
+      @tags_thread_key ||= "fluentd_tagged_logging_tags:#{object_id}".freeze
+      Thread.current[@tags_thread_key]
+    end
+
+    def request_tags=(tags)
+      @tags_thread_key ||= "fluentd_tagged_logging_tags:#{object_id}".freeze
+      Thread.current[@tags_thread_key] = tags
     end
 
     def logger_messages
