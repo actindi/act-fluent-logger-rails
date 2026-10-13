@@ -269,6 +269,44 @@ EOF
     end
   end
 
+  describe 'a second logger without log_tags' do
+    it 'keeps the log_tags set by the first logger' do
+      assigned = []
+      config = double('config', log_level: :debug)
+      allow(config).to receive(:log_tags=) { |tags| assigned << tags }
+      allow(Rails).to receive_message_chain(:application, :config).and_return(config)
+
+      logger
+      ActFluentLoggerRails::Logger.new(config_file: File.new(@config_file.path), flush_immediately: true)
+
+      expect(assigned).to eq([log_tags.values])
+    end
+  end
+
+  describe 'level' do
+    it 'drops messages below the level' do
+      logger.level = :warn
+      logger.tagged([request]) { logger.info('dropped'); logger.warn('kept') }
+      expect(@my_logger.log[0][1][:messages]).to eq(['kept'])
+    end
+
+    it 'drops messages inside silence' do
+      logger.tagged([request]) do
+        logger.silence { logger.info('silenced') }
+        logger.info('hello')
+      end
+      expect(@my_logger.log[0][1][:messages]).to eq(['hello'])
+    end
+
+    it 'drops messages inside log_at' do
+      logger.tagged([request]) do
+        logger.log_at(:error) { logger.info('dropped') }
+        logger.info('hello')
+      end
+      expect(@my_logger.log[0][1][:messages]).to eq(['hello'])
+    end
+  end
+
   describe 'flush_immediately' do
     describe 'flush_immediately: true' do
       it 'flushed' do

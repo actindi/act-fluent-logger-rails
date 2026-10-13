@@ -22,16 +22,19 @@ module ActFluentLoggerRails
                  log_tags: {},
                  settings: {},
                  flush_immediately: false)
-      Rails.application.config.log_tags = log_tags.values
-      if Rails.application.config.respond_to?(:action_cable)
-        Rails.application.config.action_cable.log_tags = log_tags.values.map do |x|
-          case
-          when x.respond_to?(:call)
-            x
-          when x.is_a?(Symbol)
-            -> (request) { request.send(x) }
-          else
-            -> (request) { x }
+      # A second logger without log_tags (e.g. one for background jobs) shouldn't clear the app's tags.
+      unless log_tags.empty?
+        Rails.application.config.log_tags = log_tags.values
+        if Rails.application.config.respond_to?(:action_cable)
+          Rails.application.config.action_cable.log_tags = log_tags.values.map do |x|
+            case
+            when x.respond_to?(:call)
+              x
+            when x.is_a?(Symbol)
+              -> (request) { request.send(x) }
+            else
+              -> (request) { x }
+            end
           end
         end
       end
@@ -103,7 +106,8 @@ module ActFluentLoggerRails
 
   class FluentLogger < ActiveSupport::Logger
     def initialize(options, level, log_tags)
-      self.level = level
+      # No log device: messages go to fluentd in add/flush.
+      super(nil, level: level)
       port    = options[:port]
       host    = options[:host]
       nanosecond_precision = options[:nanosecond_precision]
@@ -205,14 +209,6 @@ module ActFluentLoggerRails
 
     def close
       @fluent_logger.close
-    end
-
-    def level
-      @level
-    end
-
-    def level=(l)
-      @level = l
     end
 
     def format_severity(severity)
