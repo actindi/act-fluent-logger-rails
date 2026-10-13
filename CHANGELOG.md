@@ -1,4 +1,6 @@
 ## Unreleased
+* Require fluent-logger 0.9.1 or later (TLS support for `tls_options`, and a fix for invalid messages polluting the next one)
+* Add `logger` as a runtime dependency, since it is a bundled gem from Ruby 4.0
 * Send `log_tags` on Rails 7.2+, where `Rails::Rack::Logger` sets them with `push_tags` instead of `tagged`
 * Keep Array values of `log_tags` instead of flattening them into the following tags (based on #65)
 * Drop support for Rails < 7.0 and Ruby < 3.1
