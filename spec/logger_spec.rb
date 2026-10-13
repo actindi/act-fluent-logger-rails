@@ -66,7 +66,7 @@ EOF
           end
         end
         logger[:abc] = 'xyz'
-        logger.tagged(tags) { logger.info('hello') }
+        logger.tagged(*tags) { logger.info('hello') }
         expect(@my_logger.log).to eq([['foo', {
                                          abc: 'xyz',
                                          messages: ['hello'],
@@ -75,7 +75,7 @@ EOF
                                          foo: 'foo_value'
                                        } ]])
         @my_logger.clear
-        logger.tagged(tags) { logger.info('world'); logger.info('bye') }
+        logger.tagged(*tags) { logger.info('world'); logger.info('bye') }
         expect(@my_logger.log).to eq([['foo', {
                                          messages: ['world', 'bye'],
                                          severity: 'INFO',
@@ -87,12 +87,12 @@ EOF
 
     describe 'tags set at run time' do
       it 'sends tags set during the request with its messages and clears them after the flush' do
-        logger.tagged([]) do
+        logger.tagged do
           logger.info('before login')
           logger[:uid] = 'user_1'
           logger.info('after login')
         end
-        logger.tagged([]) { logger.info('next request') }
+        logger.tagged { logger.info('next request') }
 
         expect(@my_logger.log).to eq([
           ['foo', { uid: 'user_1', messages: ['before login', 'after login'], severity: 'INFO', uuid: nil, foo: nil }],
@@ -130,7 +130,7 @@ EOF
             tags = []
           end
           logger.info(tag_name)
-          logger.tagged(tags) { sleep(1) if tag_name == 'hello'; logger.info(tag_name) }
+          logger.tagged(*tags) { sleep(1) if tag_name == 'hello'; logger.info(tag_name) }
         }
       end
 
