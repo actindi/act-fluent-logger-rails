@@ -106,7 +106,8 @@ module ActFluentLoggerRails
 
   class FluentLogger < ActiveSupport::Logger
     def initialize(options, level, log_tags)
-      self.level = level
+      # No log device: messages go to fluentd in add/flush.
+      super(nil, level: level)
       port    = options[:port]
       host    = options[:host]
       nanosecond_precision = options[:nanosecond_precision]
@@ -208,14 +209,6 @@ module ActFluentLoggerRails
 
     def close
       @fluent_logger.close
-    end
-
-    def level
-      @level
-    end
-
-    def level=(l)
-      @level = l
     end
 
     def format_severity(severity)
