@@ -1,4 +1,5 @@
 ## 0.7.0 / Oct 13 2026
+* Package only `lib/`, README, CHANGELOG and LICENSE in the gem, not the specs and development files
 * Require fluent-logger 0.9.1 or later (TLS support for `tls_options`, and a fix for invalid messages polluting the next one)
 * Add `logger` as a runtime dependency, since it is a bundled gem from Ruby 4.0
 * Make `silence`, `log_at` and symbol levels like `logger.level = :warn` work. `FluentLogger` overrode `level`, so it ignored the per-thread level these use (thanks @costa, from #66)
