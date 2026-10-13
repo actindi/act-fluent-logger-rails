@@ -4,7 +4,8 @@ Fluent logger.
 
 ## Supported versions
 
- * Rails 4, 5, 6, 7
+ * Rails 7.0, 7.1, 7.2, 8.0, 8.1
+ * Ruby 3.1+
 
 ## Installation
 

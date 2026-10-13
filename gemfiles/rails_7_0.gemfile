@@ -3,7 +3,11 @@
 source "https://rubygems.org"
 
 gem "appraisal"
-gem "railties", "7.0.2"
-gem "activesupport", "7.0.2"
+gem "railties", "7.0.10"
+gem "activesupport", "7.0.10"
+gem "base64"
+gem "bigdecimal"
+gem "drb"
+gem "mutex_m"
 
 gemspec path: "../"
