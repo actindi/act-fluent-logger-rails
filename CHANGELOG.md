@@ -1,4 +1,5 @@
 ## Unreleased
+* Make `silence`, `log_at` and symbol levels like `logger.level = :warn` work. `FluentLogger` overrode `level`, so it ignored the per-thread level these use (thanks @costa, from #66)
 * Don't clear `config.log_tags` when another logger is created without `log_tags` (e.g. for Delayed::Job)
 * Send `log_tags` on Rails 7.2+, where `Rails::Rack::Logger` sets them with `push_tags` instead of `tagged`
 * Keep Array values of `log_tags` instead of flattening them into the following tags (based on #65)
