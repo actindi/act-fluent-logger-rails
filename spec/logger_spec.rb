@@ -269,6 +269,20 @@ EOF
     end
   end
 
+  describe 'a second logger without log_tags' do
+    it 'keeps the log_tags set by the first logger' do
+      assigned = []
+      config = double('config', log_level: :debug)
+      allow(config).to receive(:log_tags=) { |tags| assigned << tags }
+      allow(Rails).to receive_message_chain(:application, :config).and_return(config)
+
+      logger
+      ActFluentLoggerRails::Logger.new(config_file: File.new(@config_file.path), flush_immediately: true)
+
+      expect(assigned).to eq([log_tags.values])
+    end
+  end
+
   describe 'flush_immediately' do
     describe 'flush_immediately: true' do
       it 'flushed' do

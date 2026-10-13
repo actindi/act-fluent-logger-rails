@@ -22,16 +22,19 @@ module ActFluentLoggerRails
                  log_tags: {},
                  settings: {},
                  flush_immediately: false)
-      Rails.application.config.log_tags = log_tags.values
-      if Rails.application.config.respond_to?(:action_cable)
-        Rails.application.config.action_cable.log_tags = log_tags.values.map do |x|
-          case
-          when x.respond_to?(:call)
-            x
-          when x.is_a?(Symbol)
-            -> (request) { request.send(x) }
-          else
-            -> (request) { x }
+      # A second logger without log_tags (e.g. one for background jobs) shouldn't clear the app's tags.
+      unless log_tags.empty?
+        Rails.application.config.log_tags = log_tags.values
+        if Rails.application.config.respond_to?(:action_cable)
+          Rails.application.config.action_cable.log_tags = log_tags.values.map do |x|
+            case
+            when x.respond_to?(:call)
+              x
+            when x.is_a?(Symbol)
+              -> (request) { request.send(x) }
+            else
+              -> (request) { x }
+            end
           end
         end
       end
