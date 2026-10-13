@@ -29,11 +29,15 @@ in config/environments/production.rb
     config.logger = ActFluentLoggerRails::Logger.
       new(log_tags: {
             ip: :ip,
-            ua: :user_agent,
-            uid: ->(request) { request.session[:uid] }
+            ua: :user_agent
           })
 
 Don't use config.log_tags.
+
+`log_tags` are evaluated by `Rails::Rack::Logger` at the start of each request,
+before the session and cookie middleware run, so they cannot read the session
+(see #41). To log session values such as a user id, set them at run time from
+the controller instead (see below).
 
 ### To define where to send messages to, either:
 
@@ -94,9 +98,21 @@ Don't use config.log_tags.
 	 <pre>tls_options:
 	  use_default_ca: true</pre>
 
-You can add any tags at run time.
+You can add any tags at run time. They are sent with the rest of the request's
+messages and cleared when the messages are flushed.
 
    logger[:foo] = "foo value"
+
+For example, to log a user id stored in the session:
+
+```ruby
+class ApplicationController < ActionController::Base
+  before_action { logger[:uid] = session[:uid] }
+end
+```
+
+With `flush_immediately: true` the tags are cleared after each message, so only
+the next message carries them.
 
 ### Usage as a standalone logger
 
