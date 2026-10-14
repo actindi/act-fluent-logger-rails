@@ -166,51 +166,47 @@ module ActFluentLoggerRails
     end
 
     def flush
-      return if logger_messages.empty?
-      messages = if @messages_type == :string
-                   logger_messages.join("\n")
-                 else
-                   logger_messages
-                 end
-      map[:messages] = messages
-      map[@severity_key] = format_severity(@severity)
-      add_tags
+      messages = logger_messages
+      return if messages.empty?
+      payload = map
+      payload[:messages] = @messages_type == :string ? messages.join("\n") : messages
+      payload[@severity_key] = format_severity(@severity)
+      add_tags(payload)
 
-      @fluent_logger.post(@tag, map)
+      @fluent_logger.post(@tag, payload)
       @severity = 0
-      logger_messages.clear
+      messages.clear
       # flush_immediately flushes every line, so keep the tags until the request ends.
       self.request_tags = nil unless @flush_immediately
-      map.clear
+      payload.clear
     end
 
-    def add_tags
+    def add_tags(payload)
       tags = request_tags
       return unless tags
       # Index instead of keys.zip(tags) so a flush doesn't allocate an Array per tag.
-      payload = map
       @log_tag_keys.each_with_index do |key, i|
         payload[key] = tags[i]
       end
     end
 
     def request_tags
-      @tags_thread_key ||= "fluentd_tagged_logging_tags:#{object_id}".freeze
+      @tags_thread_key ||= :"fluentd_tagged_logging_tags:#{object_id}"
       Thread.current[@tags_thread_key]
     end
 
     def request_tags=(tags)
-      @tags_thread_key ||= "fluentd_tagged_logging_tags:#{object_id}".freeze
+      @tags_thread_key ||= :"fluentd_tagged_logging_tags:#{object_id}"
       Thread.current[@tags_thread_key] = tags
     end
 
     def logger_messages
-      @messages_thread_key ||= "fluentd_logger_messages:#{object_id}".freeze
+      @messages_thread_key ||= :"fluentd_logger_messages:#{object_id}"
       Thread.current[@messages_thread_key] ||= []
     end
 
     def map
-      @map_thread_key ||= "fluentd_logger_map:#{object_id}".freeze
+      @map_thread_key ||= :"fluentd_logger_map:#{object_id}"
       Thread.current[@map_thread_key] ||= {}
     end
 
