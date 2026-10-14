@@ -83,6 +83,11 @@ the controller instead (see below).
 
  * fluent_host: The host name of Fluentd.
  * fluent_port: The port number of Fluentd.
+ * fluent_socket_path: The path of Fluentd's Unix socket (`socket_path:` in a settings object).
+   When it is set, fluent_host, fluent_port and tls_options are ignored. It can't be set
+   with FLUENTD_URL. On CRuby, sending over a Unix socket took about a quarter of the time
+   of TCP to localhost in our measurements, so use it there when Fluentd runs on the same
+   host. On JRuby, TCP was faster, so keep TCP.
  * tag: The tag of the Fluentd event.
  * messages_type: The type of log messages. 'string' or 'array'.
    If it is 'string', the log messages is a String.
@@ -142,7 +147,8 @@ bundle exec appraisal rake
 ```
 
 `rake spec` runs the unit specs and then the integration specs in `spec/integration`.
-Those boot a small Rails app that logs to a fake fluentd over TCP. Each file runs in
+Those boot a small Rails app that logs to a fake fluentd over TCP, or over a Unix
+socket in `socket_path_spec.rb`. Each file runs in
 its own process, since a Rails app boots only once per process. To run one:
 
 ```
@@ -154,5 +160,5 @@ allocated per request (in total, by this gem and by fluent-logger) and the
 requests per second. Run it before and after a change:
 
 ```
-bundle exec ruby bench/request.rb [--flush-immediately] [--string]
+bundle exec ruby [--yjit] bench/request.rb [--flush-immediately] [--string] [--unix-socket]
 ```

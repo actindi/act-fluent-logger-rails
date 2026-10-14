@@ -292,6 +292,40 @@ EOF
       end
     end
 
+    describe 'fluent_socket_path' do
+      it 'is passed to fluent-logger as socket_path' do
+        File.write(@config_file.path, <<~EOF)
+          test:
+            fluent_socket_path: '/var/run/fluentd.sock'
+            tag:         'foo'
+        EOF
+        expect(::Fluent::Logger::FluentLogger).to receive(:new).with(nil, hash_including(socket_path: '/var/run/fluentd.sock'))
+        logger
+      end
+
+      it "isn't passed when not set" do
+        expect(::Fluent::Logger::FluentLogger).to receive(:new).with(nil, hash_excluding(:socket_path))
+        logger
+      end
+
+      it "isn't passed when empty, as from ERB with an unset variable" do
+        File.write(@config_file.path, <<~EOF)
+          test:
+            fluent_host: '127.0.0.1'
+            fluent_port: 24224
+            fluent_socket_path: "<%= ENV['ACT_FLUENT_LOGGER_UNSET_SOCKET'] %>"
+            tag:         'foo'
+        EOF
+        expect(::Fluent::Logger::FluentLogger).to receive(:new).with(nil, hash_excluding(:socket_path))
+        logger
+      end
+
+      it 'is passed from socket_path in settings' do
+        expect(::Fluent::Logger::FluentLogger).to receive(:new).with(nil, hash_including(socket_path: '/var/run/fluentd.sock'))
+        ActFluentLoggerRails::Logger.new(config_file: nil, settings: { tag: 'foo', socket_path: '/var/run/fluentd.sock' }, log_tags: log_tags)
+      end
+    end
+
     describe 'severity_key' do
       describe 'not specified' do
         it 'severity' do
