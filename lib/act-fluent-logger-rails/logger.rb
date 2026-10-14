@@ -125,8 +125,10 @@ module ActFluentLoggerRails
       @flush_immediately = options[:flush_immediately]
       logger_opts = {host: host, port: port, nanosecond_precision: nanosecond_precision}
       logger_opts[:tls_options] = options[:tls_options] unless options[:tls_options].nil?
-      # fluent-logger ignores host and port when socket_path is set
-      logger_opts[:socket_path] = options[:socket_path] unless options[:socket_path].nil?
+      # fluent-logger ignores host, port and tls_options when socket_path is set. Treat an empty
+      # path, e.g. from "<%= ENV['FLUENTD_SOCKET'] %>" with the variable unset, as not set.
+      socket_path = options[:socket_path].to_s
+      logger_opts[:socket_path] = socket_path unless socket_path.empty?
       @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, logger_opts)
       @severity = 0
       @log_tag_keys = log_tags.keys

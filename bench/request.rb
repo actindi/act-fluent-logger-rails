@@ -4,21 +4,20 @@
 #   bundle exec ruby [--yjit] bench/request.rb [--flush-immediately] [--string] [--unix-socket]
 #
 # Allocations need CRuby (memory_profiler). Run it before and after a change.
-require 'tmpdir'
 require_relative '../spec/integration/support/rails_app'
 require 'benchmark/ips'
 
 logger_options = { flush_immediately: ARGV.include?('--flush-immediately') }
 ENV['FAKE_FLUENTD_MESSAGES_TYPE'] = 'string' if ARGV.include?('--string')
-socket_path = File.join(Dir.mktmpdir, 'fluentd.sock') if ARGV.include?('--unix-socket')
-boot_rails_app(fluentd: FakeFluentd.new(keep_records: false, socket_path: socket_path), **logger_options)
+unix_socket = ARGV.include?('--unix-socket')
+boot_rails_app(fluentd: FakeFluentd.new(keep_records: false, unix_socket: unix_socket), **logger_options)
 
 session = Rack::MockRequest.new(Rails.application)
 headers = { 'REMOTE_ADDR' => '192.0.2.1', 'HTTP_USER_AGENT' => 'bench' }
 request = proc { session.get('/', headers) }
 100.times(&request)
 
-puts "#{RUBY_DESCRIPTION}, YJIT #{defined?(RubyVM::YJIT) && RubyVM::YJIT.enabled? ? 'on' : 'off'}, Rails #{Rails.version}, #{logger_options}, messages_type: #{ENV.fetch('FAKE_FLUENTD_MESSAGES_TYPE', 'array')}, #{socket_path ? 'Unix socket' : 'TCP'}"
+puts "#{RUBY_DESCRIPTION}, YJIT #{defined?(RubyVM::YJIT) && RubyVM::YJIT.enabled? ? 'on' : 'off'}, Rails #{Rails.version}, #{logger_options}, messages_type: #{ENV.fetch('FAKE_FLUENTD_MESSAGES_TYPE', 'array')}, #{unix_socket ? 'Unix socket' : 'TCP'}"
 
 if RUBY_ENGINE == 'ruby'
   require 'memory_profiler'
