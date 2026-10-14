@@ -2,11 +2,13 @@ require 'socket'
 require 'msgpack'
 
 # Accepts fluent-logger's forward protocol on a random local port and keeps the records,
-# so the specs see what fluentd would receive.
+# so the specs see what fluentd would receive. With keep_records: false it reads and drops
+# everything without allocating, for benchmarks.
 class FakeFluentd
   attr_reader :port
 
-  def initialize
+  def initialize(keep_records: true)
+    @keep_records = keep_records
     @server = TCPServer.new('127.0.0.1', 0)
     @port = @server.addr[1]
     @records = []
@@ -35,6 +37,8 @@ class FakeFluentd
   private
 
   def serve(socket)
+    return Thread.new { discard(socket) } unless @keep_records
+
     Thread.new do
       # Feed chunks instead of Unpacker.new(socket).each, which doesn't stream on JRuby.
       unpacker = MessagePack::Unpacker.new
@@ -49,5 +53,12 @@ class FakeFluentd
     rescue IOError, SystemCallError
       # fluent-logger closed or reset the connection
     end
+  end
+
+  def discard(socket)
+    buffer = String.new(capacity: 64 * 1024)
+    loop { socket.readpartial(64 * 1024, buffer) }
+  rescue IOError, SystemCallError
+    # fluent-logger closed or reset the connection
   end
 end

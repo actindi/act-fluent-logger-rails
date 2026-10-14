@@ -1,4 +1,5 @@
 ## Unreleased
+* Add `bench/request.rb` to measure allocations and speed per request through a Rails app
 * Add integration specs that log from a real Rails app to a fake fluentd
 * Send `log_tags` with every line of a request when `flush_immediately` is true, not only the first (#89)
 * Run CI on JRuby

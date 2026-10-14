@@ -1,6 +1,6 @@
 require_relative 'support/rails_app'
 
-boot_rails_app(flush_immediately: true)
+FLUENTD = boot_rails_app(flush_immediately: true)
 
 describe 'logging from a Rails app with flush_immediately' do
   it 'sends each message of a request in its own record with the log_tags' do
