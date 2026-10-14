@@ -96,11 +96,15 @@ module ActFluentLoggerRails
       tags
     end
 
+    NO_TAGS = [].freeze
+    private_constant :NO_TAGS
+
     # Keep the tags until flush, which Rails calls right after this.
     # With flush_immediately everything is already sent, so clear them here.
+    # Rails ignores the return value, so don't allocate an Array for it.
     def pop_tags(count = 1)
       self.request_tags = nil if @flush_immediately
-      []
+      NO_TAGS
     end
 
     def self.rails_passes_tags_as_array?
@@ -142,8 +146,7 @@ module ActFluentLoggerRails
         when ::String
           message
         when ::Exception
-          "#{ message.message } (#{ message.class })\n" <<
-            (message.backtrace || []).join("\n")
+          "#{message.message} (#{message.class})\n#{message.backtrace&.join("\n")}"
         else
           message.inspect
         end
