@@ -5,9 +5,9 @@ require 'logger'
 require 'active_support'
 require 'active_support/logger'
 require 'active_support/tagged_logging'
-require 'active_support/core_ext/object/try'
-require 'active_support/core_ext/hash/keys'
+require 'erb'
 require 'uri'
+require 'yaml'
 require 'rails/version'
 
 module ActFluentLoggerRails
@@ -68,13 +68,13 @@ module ActFluentLoggerRails
       params = URI.decode_www_form(uri.query.to_s).each_with_object({}) { |(key, value), h| h[key] ||= value }
 
       {
-        fluent_host: uri.host,
-        fluent_port: uri.port,
-        tag: uri.path[1..-1],
-        nanosecond_precision: params['nanosecond_precision'],
-        messages_type: params['messages_type'],
-        severity_key: params['severity_key'],
-      }.stringify_keys
+        'fluent_host' => uri.host,
+        'fluent_port' => uri.port,
+        'tag' => uri.path[1..-1],
+        'nanosecond_precision' => params['nanosecond_precision'],
+        'messages_type' => params['messages_type'],
+        'severity_key' => params['severity_key'],
+      }
     end
 
     # Tags are matched to log_tags keys by position, so don't flatten Array values.
