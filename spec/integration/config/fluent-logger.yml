@@ -1,0 +1,4 @@
+test:
+  fluent_host: '127.0.0.1'
+  fluent_port: <%= ENV.fetch('FAKE_FLUENTD_PORT') %>
+  tag:         'integration'

@@ -140,3 +140,11 @@ gem install appraisal
 bundle exec appraisal bundle
 bundle exec appraisal rake
 ```
+
+`rake spec` runs the unit specs and then the integration specs in `spec/integration`.
+Those boot a small Rails app that logs to a fake fluentd over TCP. Each file runs in
+its own process, since a Rails app boots only once per process. To run one:
+
+```
+bundle exec rspec spec/integration/logging_spec.rb
+```
