@@ -6,6 +6,8 @@ appraise 'rails-7_0' do
   gem 'bigdecimal'
   gem 'drb'
   gem 'mutex_m'
+  # Railties 7.0 requires tsort, which is no longer a default gem in Ruby 4.1+
+  gem 'tsort'
 end
 
 appraise 'rails-7_1' do

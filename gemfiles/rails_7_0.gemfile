@@ -9,5 +9,6 @@ gem "base64"
 gem "bigdecimal"
 gem "drb"
 gem "mutex_m"
+gem "tsort"
 
 gemspec path: "../"
