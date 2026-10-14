@@ -128,10 +128,17 @@ module ActFluentLoggerRails
 
     def add(severity, message = nil, progname = nil, &block)
       return true if severity < level
-      message = (block_given? ? block.call : progname) if message.blank?
-      return true if message.blank?
+      message = (block_given? ? block.call : progname) if message.nil? || blank_message?(message)
+      return true if blank_message?(message)
       add_message(severity, message)
       true
+    end
+
+    # String#blank? raises for an invalid byte sequence, and such a String isn't blank anyway.
+    private def blank_message?(message)
+      message.blank?
+    rescue ArgumentError
+      false
     end
 
     def add_message(severity, message)
