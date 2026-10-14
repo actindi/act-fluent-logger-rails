@@ -79,6 +79,25 @@ the controller instead (see below).
             severity_key: 'level'
           })
 
+#### send over a Unix socket
+
+When Fluentd runs on the same host, set `fluent_socket_path` instead of the host and port:
+
+    production:
+      fluent_socket_path: '/var/run/fluent/fluent.sock'
+      tag:                'foo'
+
+and have Fluentd listen on it:
+
+    <source>
+      @type unix
+      path /var/run/fluent/fluent.sock
+    </source>
+
+With Docker, put the socket on a volume shared by the app and Fluentd containers.
+Keep the path short: Unix socket paths are limited to about 104 bytes on macOS and
+108 on Linux.
+
 ### Setting
 
  * fluent_host: The host name of Fluentd.
