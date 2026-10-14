@@ -1,6 +1,8 @@
 # Act::Fluent::Logger::Rails
 
-Fluent logger.
+A Rails logger that sends your app's logs to [Fluentd](https://www.fluentd.org/).
+By default, the messages of each request are sent together as one record, along
+with tags such as the request's IP address and user agent.
 
 ## Supported versions
 
