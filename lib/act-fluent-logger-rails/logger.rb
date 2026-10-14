@@ -148,13 +148,23 @@ module ActFluentLoggerRails
           message.inspect
         end
 
-      if message.encoding == Encoding::UTF_8
-        logger_messages << message
-      else
-        logger_messages << message.dup.force_encoding(Encoding::UTF_8)
-      end
+      logger_messages << to_utf8(message)
 
       flush if @flush_immediately
+    end
+
+    # msgpack sends text in other encodings as UTF-8 by itself, but messages_type: string
+    # joins the messages, which fails for non-ASCII text in different encodings.
+    private def to_utf8(message)
+      encoding = message.encoding
+      if encoding == Encoding::UTF_8 || (encoding != Encoding::BINARY && message.ascii_only?)
+        message
+      elsif encoding == Encoding::BINARY
+        # Usually UTF-8 bytes, which msgpack would send as binary instead of text.
+        message.dup.force_encoding(Encoding::UTF_8)
+      else
+        message.encode(Encoding::UTF_8, invalid: :replace, undef: :replace)
+      end
     end
 
     def [](key)

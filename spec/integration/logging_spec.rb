@@ -40,6 +40,17 @@ describe 'logging from a Rails app' do
     expect(records.last.keys).to contain_exactly('messages', 'severity')
   end
 
+  it 'sends messages in other encodings to fluentd as UTF-8 text' do
+    records = records_from do
+      Rails.logger.info('日本'.encode('Shift_JIS'))
+      Rails.logger.info('花'.b)
+      Rails.logger.flush
+    end
+
+    expect(records.last['messages']).to eq(['日本', '花'])
+    expect(records.last['messages'].map(&:encoding)).to all(eq(Encoding::UTF_8))
+  end
+
   it 'drops messages inside silence' do
     records = records_from { get('/silenced') }
 
