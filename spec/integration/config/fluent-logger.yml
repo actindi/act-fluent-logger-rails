@@ -1,5 +1,6 @@
 test:
   fluent_host: '127.0.0.1'
-  fluent_port: <%= ENV.fetch('FAKE_FLUENTD_PORT') %>
+  fluent_port: <%= ENV['FAKE_FLUENTD_PORT'] %>
+  fluent_socket_path: <%= ENV['FAKE_FLUENTD_SOCKET_PATH'] %>
   tag:         'integration'
   messages_type: <%= ENV.fetch('FAKE_FLUENTD_MESSAGES_TYPE', 'array') %>

@@ -1,16 +1,21 @@
 require 'socket'
 require 'msgpack'
 
-# Accepts fluent-logger's forward protocol on a random local port and keeps the records,
-# so the specs see what fluentd would receive. With keep_records: false it reads and drops
-# everything without allocating, for benchmarks.
+# Accepts fluent-logger's forward protocol on a random local port, or on a Unix socket at
+# socket_path, and keeps the records, so the specs see what fluentd would receive.
+# With keep_records: false it reads and drops everything without allocating, for benchmarks.
 class FakeFluentd
-  attr_reader :port
+  attr_reader :port, :socket_path
 
-  def initialize(keep_records: true)
+  def initialize(keep_records: true, socket_path: nil)
     @keep_records = keep_records
-    @server = TCPServer.new('127.0.0.1', 0)
-    @port = @server.addr[1]
+    if socket_path
+      @server = UNIXServer.new(socket_path)
+      @socket_path = socket_path
+    else
+      @server = TCPServer.new('127.0.0.1', 0)
+      @port = @server.addr[1]
+    end
     @records = []
     @mutex = Mutex.new
     @received = ConditionVariable.new

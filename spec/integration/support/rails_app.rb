@@ -47,7 +47,8 @@ LOG_TAGS = {
 
 # Returns the FakeFluentd the logger sends to.
 def boot_rails_app(fluentd: FakeFluentd.new, **logger_options)
-  ENV['FAKE_FLUENTD_PORT'] = fluentd.port.to_s
+  ENV['FAKE_FLUENTD_PORT'] = fluentd.port&.to_s
+  ENV['FAKE_FLUENTD_SOCKET_PATH'] = fluentd.socket_path
   IntegrationApp.configure do
     config.logger = ActFluentLoggerRails::Logger.new(log_tags: LOG_TAGS, **logger_options)
   end

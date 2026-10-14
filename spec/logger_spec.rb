@@ -292,6 +292,23 @@ EOF
       end
     end
 
+    describe 'fluent_socket_path' do
+      it 'is passed to fluent-logger as socket_path' do
+        File.write(@config_file.path, <<~EOF)
+          test:
+            fluent_socket_path: '/var/run/fluentd.sock'
+            tag:         'foo'
+        EOF
+        expect(::Fluent::Logger::FluentLogger).to receive(:new).with(nil, hash_including(socket_path: '/var/run/fluentd.sock'))
+        logger
+      end
+
+      it "isn't passed when not set" do
+        expect(::Fluent::Logger::FluentLogger).to receive(:new).with(nil, hash_excluding(:socket_path))
+        logger
+      end
+    end
+
     describe 'severity_key' do
       describe 'not specified' do
         it 'severity' do
