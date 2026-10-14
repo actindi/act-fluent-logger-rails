@@ -219,6 +219,32 @@ EOF
       end
     end
 
+    describe 'invalid byte sequence' do
+      it "sends the message instead of raising" do
+        invalid = "caf\xFF"
+        logger.tagged([request]) {
+          logger.info(invalid)
+          logger.info("  \xFF")
+        }
+        expect(@my_logger.log[0][1][:messages]).to eq([invalid, "  \xFF"])
+      end
+
+      it 'sends whitespace-only messages, like ::Logger' do
+        logger.tagged([request]) { logger.info('  ') }
+        expect(@my_logger.log[0][1][:messages]).to eq(['  '])
+      end
+
+      it 'still drops nil and empty messages' do
+        logger.tagged([request]) {
+          logger.info(nil)
+          logger.info('')
+          logger.info { '' }
+          logger.info('hello')
+        }
+        expect(@my_logger.log[0][1][:messages]).to eq(['hello'])
+      end
+    end
+
     describe 'Object' do
       it 'output inspect' do
         x = Object.new

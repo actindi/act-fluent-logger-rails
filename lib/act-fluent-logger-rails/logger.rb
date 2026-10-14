@@ -5,7 +5,6 @@ require 'logger'
 require 'active_support'
 require 'active_support/logger'
 require 'active_support/tagged_logging'
-require 'active_support/core_ext/object/blank'
 require 'active_support/core_ext/object/try'
 require 'active_support/core_ext/hash/keys'
 require 'uri'
@@ -132,10 +131,16 @@ module ActFluentLoggerRails
 
     def add(severity, message = nil, progname = nil, &block)
       return true if severity < level
-      message = (block_given? ? block.call : progname) if message.blank?
-      return true if message.blank?
+      message = (block_given? ? block.call : progname) if empty_message?(message)
+      return true if empty_message?(message)
       add_message(severity, message)
       true
+    end
+
+    # Like ::Logger, which only checks for nil, but skip empty Strings too. Not String#blank?,
+    # which runs a regexp on every message and raises for an invalid byte sequence.
+    private def empty_message?(message)
+      message.nil? || (message.is_a?(::String) && message.empty?)
     end
 
     def add_message(severity, message)
