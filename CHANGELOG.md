@@ -1,4 +1,5 @@
 ## Unreleased
+* Send `log_tags` with every line of a request when `flush_immediately` is true, not only the first (#89)
 * Run CI on JRuby
 * Don't allocate an Array per `log_tags` entry on each flush
 
