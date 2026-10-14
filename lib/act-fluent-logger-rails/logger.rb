@@ -123,7 +123,7 @@ module ActFluentLoggerRails
       logger_opts[:tls_options] = options[:tls_options] unless options[:tls_options].nil?
       @fluent_logger = ::Fluent::Logger::FluentLogger.new(nil, logger_opts)
       @severity = 0
-      @log_tags = log_tags
+      @log_tag_keys = log_tags.keys
     end
 
     def add(severity, message = nil, progname = nil, &block)
@@ -187,8 +187,10 @@ module ActFluentLoggerRails
     def add_tags
       tags = request_tags
       return unless tags
-      @log_tags.keys.zip(tags).each do |k, v|
-        map[k] = v
+      # Index instead of keys.zip(tags) so a flush doesn't allocate an Array per tag.
+      payload = map
+      @log_tag_keys.each_with_index do |key, i|
+        payload[key] = tags[i]
       end
     end
 

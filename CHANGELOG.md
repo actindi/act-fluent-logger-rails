@@ -1,5 +1,7 @@
 ## Unreleased
 * Send `log_tags` with every line of a request when `flush_immediately` is true, not only the first (#89)
+* Run CI on JRuby
+* Don't allocate an Array per `log_tags` entry on each flush
 
 ## 0.7.0 / Oct 13 2026
 * Package only `lib/`, README, CHANGELOG and LICENSE in the gem, not the specs and development files
