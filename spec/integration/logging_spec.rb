@@ -1,6 +1,6 @@
 require_relative 'support/rails_app'
 
-boot_rails_app
+FLUENTD = boot_rails_app
 
 describe 'logging from a Rails app' do
   it 'sends the messages of a request in one record with the log_tags' do

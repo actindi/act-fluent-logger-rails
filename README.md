@@ -148,3 +148,11 @@ its own process, since a Rails app boots only once per process. To run one:
 ```
 bundle exec rspec spec/integration/logging_spec.rb
 ```
+
+`bench/request.rb` sends requests through the same app and prints the objects
+allocated per request (in total, by this gem and by fluent-logger) and the
+requests per second. Run it before and after a change:
+
+```
+bundle exec ruby bench/request.rb [--flush-immediately] [--string]
+```

@@ -45,10 +45,9 @@ LOG_TAGS = {
   roles: ->(_request) { ['admin', 'staff'] },
 }.freeze
 
-FLUENTD = FakeFluentd.new
-
-def boot_rails_app(**logger_options)
-  ENV['FAKE_FLUENTD_PORT'] = FLUENTD.port.to_s
+# Returns the FakeFluentd the logger sends to.
+def boot_rails_app(fluentd: FakeFluentd.new, **logger_options)
+  ENV['FAKE_FLUENTD_PORT'] = fluentd.port.to_s
   IntegrationApp.configure do
     config.logger = ActFluentLoggerRails::Logger.new(log_tags: LOG_TAGS, **logger_options)
   end
@@ -58,6 +57,7 @@ def boot_rails_app(**logger_options)
     get '/runtime_tag' => 'welcome#runtime_tag'
     get '/silenced' => 'welcome#silenced'
   end
+  fluentd
 end
 
 module IntegrationHelpers
@@ -81,6 +81,9 @@ module IntegrationHelpers
   end
 end
 
-RSpec.configure do |config|
-  config.include IntegrationHelpers
+# Also loaded by bench/request.rb, without RSpec.
+if defined?(RSpec)
+  RSpec.configure do |config|
+    config.include IntegrationHelpers
+  end
 end

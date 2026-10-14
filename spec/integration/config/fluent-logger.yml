@@ -2,3 +2,4 @@ test:
   fluent_host: '127.0.0.1'
   fluent_port: <%= ENV.fetch('FAKE_FLUENTD_PORT') %>
   tag:         'integration'
+  messages_type: <%= ENV.fetch('FAKE_FLUENTD_MESSAGES_TYPE', 'array') %>
