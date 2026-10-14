@@ -1,7 +1,7 @@
 # Sends requests through the integration app in spec/integration and reports the
 # allocations per request (all of them, this gem's and fluent-logger's) and requests/s.
 #
-#   bundle exec ruby bench/request.rb [--flush-immediately] [--string]
+#   bundle exec ruby [--yjit] bench/request.rb [--flush-immediately] [--string]
 #
 # Allocations need CRuby (memory_profiler). Run it before and after a change.
 require_relative '../spec/integration/support/rails_app'
@@ -16,7 +16,7 @@ headers = { 'REMOTE_ADDR' => '192.0.2.1', 'HTTP_USER_AGENT' => 'bench' }
 request = proc { session.get('/', headers) }
 100.times(&request)
 
-puts "#{RUBY_DESCRIPTION}, Rails #{Rails.version}, #{logger_options}, messages_type: #{ENV.fetch('FAKE_FLUENTD_MESSAGES_TYPE', 'array')}"
+puts "#{RUBY_DESCRIPTION}, YJIT #{defined?(RubyVM::YJIT) && RubyVM::YJIT.enabled? ? 'on' : 'off'}, Rails #{Rails.version}, #{logger_options}, messages_type: #{ENV.fetch('FAKE_FLUENTD_MESSAGES_TYPE', 'array')}"
 
 if RUBY_ENGINE == 'ruby'
   require 'memory_profiler'
