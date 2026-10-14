@@ -176,6 +176,13 @@ EOF
             to match(%r|divided by 0 \(ZeroDivisionError\).*spec/logger_spec\.rb:|m)
         end
       end
+
+      it 'outputs message and class of an exception that was never raised' do
+        logger.tagged([request]) {
+          logger.error(ArgumentError.new('not raised'))
+        }
+        expect(@my_logger.log[0][1][:messages][0]).to eq("not raised (ArgumentError)\n")
+      end
     end
 
     describe 'Object' do
