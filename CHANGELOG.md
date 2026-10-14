@@ -1,5 +1,7 @@
 ## Unreleased
 * Don't raise `ArgumentError` when logging a String with an invalid byte sequence (#97). Messages are now skipped only when they're `nil` or an empty String, like `::Logger`, instead of `blank?`, so whitespace-only messages are sent. This makes the logger's part of a request 7–10% faster on CRuby and about 30% on JRuby
+* Convert messages in encodings like Shift_JIS or EUC-JP to UTF-8 instead of relabeling their bytes as UTF-8, and don't copy ASCII-only messages (#95)
+* Don't allocate in `pop_tags`, and build the message of an Exception in one String
 * Use Symbol keys for the per-thread buffers and look them up once per flush, which makes the logger's part of a request about 12% faster on CRuby and 27% on JRuby
 * Add `bench/request.rb` to measure allocations and speed per request through a Rails app
 * Add integration specs that log from a real Rails app to a fake fluentd

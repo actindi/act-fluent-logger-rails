@@ -164,6 +164,40 @@ EOF
       end
     end
 
+    describe 'encodings other than UTF-8' do
+      let(:shift_jis) { '日本'.encode('Shift_JIS') }
+
+      it 'converts text in another encoding to UTF-8' do
+        logger.tagged([request]) {
+          logger.info(shift_jis)
+          logger.info('hi'.encode('UTF-16LE'))
+        }
+        expect(@my_logger.log[0][1][:messages]).to eq(['日本', 'hi'])
+        expect(@my_logger.log[0][1][:messages].map(&:encoding)).to all(eq(Encoding::UTF_8))
+      end
+
+      it 'joins converted text with UTF-8 messages when messages_type is string' do
+        logger.instance_variable_set(:@messages_type, :string)
+        logger.tagged([request]) {
+          logger.info(shift_jis)
+          logger.info('咲く')
+        }
+        expect(@my_logger.log[0][1][:messages]).to eq("日本\n咲く")
+      end
+
+      it "replaces characters that UTF-8 can't represent instead of raising" do
+        # The Windows-31J encoding of ①, which is valid Shift_JIS but has no mapping to UTF-8
+        logger.tagged([request]) { logger.info("\x87\x40".dup.force_encoding('Shift_JIS')) }
+        expect(@my_logger.log[0][1][:messages]).to eq(["\uFFFD"])
+      end
+
+      it "doesn't copy ASCII-only messages" do
+        us_ascii = 42.inspect
+        logger.tagged([request]) { logger.info(us_ascii) }
+        expect(@my_logger.log[0][1][:messages][0]).to equal(us_ascii)
+      end
+    end
+
     describe 'Exception' do
       it 'output message, class, backtrace' do
         begin
@@ -175,6 +209,13 @@ EOF
           expect(@my_logger.log[0][1][:messages][0]).
             to match(%r|divided by 0 \(ZeroDivisionError\).*spec/logger_spec\.rb:|m)
         end
+      end
+
+      it 'outputs message and class of an exception that was never raised' do
+        logger.tagged([request]) {
+          logger.error(ArgumentError.new('not raised'))
+        }
+        expect(@my_logger.log[0][1][:messages][0]).to eq("not raised (ArgumentError)\n")
       end
     end
 
