@@ -1,4 +1,5 @@
 ## Unreleased
+* Stop requiring the unused `try` and `hash/keys` ActiveSupport core extensions, and require `erb` and `yaml`, which `Logger.new` uses
 * Don't raise `ArgumentError` when logging a String with an invalid byte sequence (#97). Messages are now skipped only when they're `nil` or an empty String, like `::Logger`, instead of `blank?`, so whitespace-only messages are sent. This makes the logger's part of a request 7–10% faster on CRuby and about 30% on JRuby
 * Convert messages in encodings like Shift_JIS or EUC-JP to UTF-8 instead of relabeling their bytes as UTF-8, and don't copy ASCII-only messages (#95)
 * Don't allocate in `pop_tags`, and build the message of an Exception in one String
