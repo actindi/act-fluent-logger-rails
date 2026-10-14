@@ -86,6 +86,8 @@ module ActFluentLoggerRails
       yield self
     ensure
       flush
+      # With flush_immediately, flush keeps the tags for the next lines of the request.
+      self.request_tags = nil
     end
 
     # Used instead of `tagged` by Rails 7.2+.
@@ -95,7 +97,9 @@ module ActFluentLoggerRails
     end
 
     # Keep the tags until flush, which Rails calls right after this.
+    # With flush_immediately everything is already sent, so clear them here.
     def pop_tags(count = 1)
+      self.request_tags = nil if @flush_immediately
       []
     end
 
@@ -175,7 +179,8 @@ module ActFluentLoggerRails
       @fluent_logger.post(@tag, map)
       @severity = 0
       logger_messages.clear
-      self.request_tags = nil
+      # flush_immediately flushes every line, so keep the tags until the request ends.
+      self.request_tags = nil unless @flush_immediately
       map.clear
     end
 

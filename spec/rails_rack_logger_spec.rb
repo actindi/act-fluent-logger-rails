@@ -62,4 +62,29 @@ describe Rails::Rack::Logger do
       expect(posted.first).to include(roles: ['admin', 'staff'])
     end
   end
+
+  context 'when flush_immediately is true' do
+    let(:logger) do
+      ActFluentLoggerRails::Logger.new(config_file: nil, settings: { tag: 'foo' }, log_tags: log_tags, flush_immediately: true)
+    end
+
+    it 'sends the log_tags with every line of the request and not after it' do
+      app = lambda do |_env|
+        Rails.logger.info('one')
+        Rails.logger.info('two')
+        [200, {}, ['ok']]
+      end
+      middleware = described_class.new(app, log_tags.values)
+
+      _status, _headers, body = middleware.call(Rack::MockRequest.env_for('/', 'REMOTE_ADDR' => '192.0.2.1'))
+      body.close
+      Rails.logger.info('after the request')
+
+      *request_lines, after_request = posted
+      expect(request_lines.map { |map| map[:messages] }).to include(['one'], ['two'])
+      expect(request_lines).to all(include(uuid: 'uuid_value', roles: ['admin', 'staff'], ip: '192.0.2.1'))
+      expect(after_request[:messages]).to eq(['after the request'])
+      expect(after_request).not_to include(:uuid, :roles, :ip)
+    end
+  end
 end

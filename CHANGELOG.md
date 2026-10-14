@@ -1,3 +1,6 @@
+## Unreleased
+* Send `log_tags` with every line of a request when `flush_immediately` is true, not only the first (#89)
+
 ## 0.7.0 / Oct 13 2026
 * Package only `lib/`, README, CHANGELOG and LICENSE in the gem, not the specs and development files
 * Require fluent-logger 0.9.1 or later (TLS support for `tls_options`, and a fix for invalid messages polluting the next one)
