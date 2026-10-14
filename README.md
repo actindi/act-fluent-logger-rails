@@ -1,6 +1,8 @@
 # Act::Fluent::Logger::Rails
 
-Fluent logger.
+A Rails logger that sends your app's logs to [Fluentd](https://www.fluentd.org/).
+By default, the messages of each request are sent together as one record, along
+with tags such as the request's IP address and user agent.
 
 ## Supported versions
 
@@ -78,6 +80,25 @@ the controller instead (see below).
             messages_type: 'string',
             severity_key: 'level'
           })
+
+#### send over a Unix socket
+
+When Fluentd runs on the same host, set `fluent_socket_path` instead of the host and port:
+
+    production:
+      fluent_socket_path: '/var/run/fluent/fluent.sock'
+      tag:                'foo'
+
+and have Fluentd listen on it:
+
+    <source>
+      @type unix
+      path /var/run/fluent/fluent.sock
+    </source>
+
+With Docker, put the socket on a volume shared by the app and Fluentd containers.
+Keep the path short: Unix socket paths are limited to about 104 bytes on macOS and
+108 on Linux.
 
 ### Setting
 
