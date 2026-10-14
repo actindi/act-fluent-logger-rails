@@ -1,4 +1,5 @@
 ## Unreleased
+* Don't allocate in `pop_tags`, and build the message of an Exception in one String
 * Use Symbol keys for the per-thread buffers and look them up once per flush, which makes the logger's part of a request about 12% faster on CRuby and 27% on JRuby
 * Add `bench/request.rb` to measure allocations and speed per request through a Rails app
 * Add integration specs that log from a real Rails app to a fake fluentd
