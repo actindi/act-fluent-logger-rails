@@ -13,26 +13,34 @@ with tags such as the request's IP address and user agent.
 
 Add this line to your application's Gemfile:
 
-    gem 'act-fluent-logger-rails'
+```ruby
+gem 'act-fluent-logger-rails'
+```
 
 And then execute:
 
-    $ bundle
+```sh
+bundle
+```
 
 Or install it yourself as:
 
-    $ gem install act-fluent-logger-rails
+```sh
+gem install act-fluent-logger-rails
+```
 
 ## Usage
 
 in config/environments/production.rb
 
-    config.log_level = :info
-    config.logger = ActFluentLoggerRails::Logger.
-      new(log_tags: {
-            ip: :ip,
-            ua: :user_agent
-          })
+```ruby
+config.log_level = :info
+config.logger = ActFluentLoggerRails::Logger.
+  new(log_tags: {
+        ip: :ip,
+        ua: :user_agent
+      })
+```
 
 Don't use config.log_tags.
 
@@ -45,56 +53,66 @@ the controller instead (see below).
 
 #### create config/fluent-logger.yml
 
-    development:
-      fluent_host:   '127.0.0.1'
-      fluent_port:   24224
-      tag:           'foo'
-      messages_type: 'string'
-      severity_key:  'level'     # default severity
+```yaml
+development:
+  fluent_host:   '127.0.0.1'
+  fluent_port:   24224
+  tag:           'foo'
+  messages_type: 'string'
+  severity_key:  'level'     # default severity
 
-    test:
-      fluent_host:   '127.0.0.1'
-      fluent_port:   24224
-      tag:           'foo'
-      messages_type: 'string'
-      severity_key:  'level'     # default severity
+test:
+  fluent_host:   '127.0.0.1'
+  fluent_port:   24224
+  tag:           'foo'
+  messages_type: 'string'
+  severity_key:  'level'     # default severity
 
-    production:
-      fluent_host:   '127.0.0.1'
-      fluent_port:   24224
-      tag:           'foo'
-      messages_type: 'string'
-      severity_key:  'level'     # default severity
+production:
+  fluent_host:   '127.0.0.1'
+  fluent_port:   24224
+  tag:           'foo'
+  messages_type: 'string'
+  severity_key:  'level'     # default severity
+```
 
 #### set an environment variable FLUENTD_URL
 
-    http://fluentd.example.com:42442/foo?messages_type=string&severity_key=level
+```
+http://fluentd.example.com:42442/foo?messages_type=string&severity_key=level
+```
 
 #### pass a settings object to ActFluentLoggerRails::Logger.new
 
-    config.logger = ActFluentLoggerRails::Logger.
-      new(settings: {
-            host: '127.0.0.1',
-            port: 24224,
-            tag: 'foo',
-            messages_type: 'string',
-            severity_key: 'level'
-          })
+```ruby
+config.logger = ActFluentLoggerRails::Logger.
+  new(settings: {
+        host: '127.0.0.1',
+        port: 24224,
+        tag: 'foo',
+        messages_type: 'string',
+        severity_key: 'level'
+      })
+```
 
 #### send over a Unix socket
 
 When Fluentd runs on the same host, set `fluent_socket_path` instead of the host and port:
 
-    production:
-      fluent_socket_path: '/var/run/fluent/fluent.sock'
-      tag:                'foo'
+```yaml
+production:
+  fluent_socket_path: '/var/run/fluent/fluent.sock'
+  tag:                'foo'
+```
 
 and have Fluentd listen on it:
 
-    <source>
-      @type unix
-      path /var/run/fluent/fluent.sock
-    </source>
+```
+<source>
+  @type unix
+  path /var/run/fluent/fluent.sock
+</source>
+```
 
 With Docker, put the socket on a volume shared by the app and Fluentd containers.
 Keep the path short: Unix socket paths are limited to about 104 bytes on macOS and
@@ -120,14 +138,18 @@ Keep the path short: Unix socket paths are limited to about 104 bytes on macOS a
 2013-01-18T15:04:50+09:00 foo {"messages":["Started GET \"/\" for 127.0.0.1 at 2013-01-18 15:04:49 +0900","Processing by TopController#index as HTML","Completed 200 OK in 635ms (Views: 479.3ms | ActiveRecord: 39.6ms)"],"severity":"INFO"}
 ```
  * severity_key: The key of severity(DEBUG, INFO, WARN, ERROR).
- * tls_options: A hash of tls options compatible with [fluent-logger-ruby](https://github.com/fluent/fluent-logger-ruby#tls-setting). The simplest being: 
-	 <pre>tls_options:
-	  use_default_ca: true</pre>
+ * tls_options: A hash of tls options compatible with [fluent-logger-ruby](https://github.com/fluent/fluent-logger-ruby#tls-setting). The simplest being:
+   ```yaml
+   tls_options:
+     use_default_ca: true
+   ```
 
 You can add any tags at run time. They are sent with the rest of the request's
 messages and cleared when the messages are flushed.
 
-   logger[:foo] = "foo value"
+```ruby
+logger[:foo] = "foo value"
+```
 
 For example, to log a user id stored in the session:
 
@@ -161,7 +183,7 @@ ActFluentLoggerRails::Logger.new(flush_immediately: true)
 5. Create new Pull Request
 
 ## How to run test with appraisal
-```
+```sh
 gem install appraisal
 bundle exec appraisal bundle
 bundle exec appraisal rake
@@ -172,7 +194,7 @@ Those boot a small Rails app that logs to a fake fluentd over TCP, or over a Uni
 socket in `socket_path_spec.rb`. Each file runs in
 its own process, since a Rails app boots only once per process. To run one:
 
-```
+```sh
 bundle exec rspec spec/integration/logging_spec.rb
 ```
 
@@ -180,6 +202,6 @@ bundle exec rspec spec/integration/logging_spec.rb
 allocated per request (in total, by this gem and by fluent-logger) and the
 requests per second. Run it before and after a change:
 
-```
+```sh
 bundle exec ruby [--yjit] bench/request.rb [--flush-immediately] [--string] [--unix-socket]
 ```
