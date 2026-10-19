@@ -1,4 +1,4 @@
-## Unreleased
+## 0.8.0 / Oct 15 2026
 * Support sending to Fluentd over a Unix socket with `fluent_socket_path` in fluent-logger.yml or `socket_path:` in settings (#61)
 * Stop requiring the unused `try` and `hash/keys` ActiveSupport core extensions, and require `erb` and `yaml`, which `Logger.new` uses
 * Don't raise `ArgumentError` when logging a String with an invalid byte sequence (#97). Messages are now skipped only when they're `nil` or an empty String, like `::Logger`, instead of `blank?`, so whitespace-only messages are sent. This makes the logger's part of a request 7–10% faster on CRuby and about 30% on JRuby
